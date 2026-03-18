@@ -39,9 +39,11 @@ function formatDate(iso: string) {
 
 interface Props {
   monitorId: number
+  /** When true: no footer labels, shorter bars, for inline card use */
+  compact?: boolean
 }
 
-export default function UptimeBars({ monitorId }: Props) {
+export default function UptimeBars({ monitorId, compact }: Props) {
   const navigate = useNavigate()
   const [tooltip, setTooltip] = useState<TooltipState | null>(null)
 
@@ -64,18 +66,20 @@ export default function UptimeBars({ monitorId }: Props) {
     ? Math.round((history.filter((r) => r.Status === 'UP').length / history.length) * 100)
     : null
 
+  const barH = compact ? 'h-4' : 'h-5'
+
   if (isLoading) {
     return (
-      <div className="flex gap-0.5 mt-2">
+      <div className={`flex gap-0.5 ${compact ? '' : 'mt-2'}`}>
         {Array(BAR_COUNT).fill(null).map((_, i) => (
-          <div key={i} className="flex-1 h-5 rounded-sm bg-gray-800 animate-pulse" />
+          <div key={i} className={`flex-1 ${barH} rounded-sm bg-gray-800 animate-pulse`} />
         ))}
       </div>
     )
   }
 
   return (
-    <div className="mt-2 relative">
+    <div className={`${compact ? '' : 'mt-2'} relative`}>
       {/* Bars row */}
       <div
         className="flex gap-0.5 cursor-pointer"
@@ -86,12 +90,12 @@ export default function UptimeBars({ monitorId }: Props) {
           result === null ? (
             <div
               key={i}
-              className="flex-1 h-5 rounded-sm bg-gray-800/50"
+              className={`flex-1 ${barH} rounded-sm bg-gray-800/50`}
             />
           ) : (
             <div
               key={i}
-              className={`flex-1 h-5 rounded-sm transition-all duration-100 ${statusColor(result.Status)} ${statusColorHover(result.Status)}`}
+              className={`flex-1 ${barH} rounded-sm transition-all duration-100 ${statusColor(result.Status)} ${statusColorHover(result.Status)}`}
               onMouseEnter={(e) => {
                 const rect = e.currentTarget.getBoundingClientRect()
                 setTooltip({ x: rect.left + rect.width / 2, y: rect.top, result })
@@ -102,15 +106,17 @@ export default function UptimeBars({ monitorId }: Props) {
         )}
       </div>
 
-      {/* Footer: label + uptime % */}
-      <div className="flex items-center justify-between mt-1">
-        <span className="text-xs text-gray-600">Last {BAR_COUNT} checks</span>
-        {uptime !== null && (
-          <span className={`text-xs font-medium ${uptime >= 99 ? 'text-emerald-400' : uptime >= 90 ? 'text-yellow-400' : 'text-red-400'}`}>
-            {uptime}% uptime
-          </span>
-        )}
-      </div>
+      {/* Footer: label + uptime % — hidden in compact mode */}
+      {!compact && (
+        <div className="flex items-center justify-between mt-1">
+          <span className="text-xs text-gray-600">Last {BAR_COUNT} checks</span>
+          {uptime !== null && (
+            <span className={`text-xs font-medium ${uptime >= 99 ? 'text-emerald-400' : uptime >= 90 ? 'text-yellow-400' : 'text-red-400'}`}>
+              {uptime}% uptime
+            </span>
+          )}
+        </div>
+      )}
 
       {/* Tooltip — rendered via portal-like fixed positioning */}
       {tooltip && (

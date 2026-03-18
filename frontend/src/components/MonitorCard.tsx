@@ -25,40 +25,41 @@ const typeLabel: Record<string, string> = {
 }
 
 export default function MonitorCard({ monitor, onPause, onResume, onDelete }: Props) {
-  const target = monitor.URL || monitor.Host || monitor.Domain || monitor.DNSHost || '—'
-
   return (
     <div className="card p-4 hover:border-gray-700 transition-colors group">
-      {/* Top row: status + info + actions */}
-      <div className="flex items-center gap-4">
+      {/* Single row: status | name+badges | bars | interval | actions */}
+      <div className="flex items-center gap-3">
         {/* Status dot */}
         <div className="flex-shrink-0">
           <StatusBadge status={monitor.Status} />
         </div>
 
-        {/* Info */}
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2">
-            <Link
-              to={`/monitors/${monitor.ID}`}
-              className="font-medium text-gray-100 hover:text-indigo-400 transition-colors truncate"
-            >
-              {monitor.Name}
-            </Link>
-            <span className="text-xs text-gray-600 bg-gray-800 px-1.5 py-0.5 rounded flex-shrink-0">
-              {typeLabel[monitor.Type] ?? monitor.Type}
+        {/* Name + type badge — fixed width on larger screens, shrinks on small */}
+        <div className="flex items-center gap-2 min-w-0 flex-shrink-0 w-40 sm:w-52">
+          <Link
+            to={`/monitors/${monitor.ID}`}
+            className="font-medium text-gray-100 hover:text-indigo-400 transition-colors truncate"
+            title={monitor.Name}
+          >
+            {monitor.Name}
+          </Link>
+          <span className="text-xs text-gray-600 bg-gray-800 px-1.5 py-0.5 rounded flex-shrink-0 hidden sm:inline">
+            {typeLabel[monitor.Type] ?? monitor.Type}
+          </span>
+          {!monitor.Active && (
+            <span className="text-xs text-gray-500 bg-gray-800 px-1.5 py-0.5 rounded flex-shrink-0 hidden sm:inline">
+              Paused
             </span>
-            {!monitor.Active && (
-              <span className="text-xs text-gray-500 bg-gray-800 px-1.5 py-0.5 rounded flex-shrink-0">
-                Paused
-              </span>
-            )}
-          </div>
-          <p className="text-xs text-gray-500 truncate mt-0.5">{target}</p>
+          )}
+        </div>
+
+        {/* Uptime bars — fills remaining space */}
+        <div className="flex-1 min-w-0">
+          <UptimeBars monitorId={monitor.ID} compact />
         </div>
 
         {/* Interval */}
-        <span className="text-xs text-gray-600 flex-shrink-0 hidden sm:block">
+        <span className="text-xs text-gray-600 flex-shrink-0 hidden md:block">
           every {monitor.IntervalSeconds}s
         </span>
 
@@ -97,9 +98,6 @@ export default function MonitorCard({ monitor, onPause, onResume, onDelete }: Pr
           </button>
         </div>
       </div>
-
-      {/* Uptime bars */}
-      <UptimeBars monitorId={monitor.ID} />
     </div>
   )
 }
