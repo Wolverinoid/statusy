@@ -107,7 +107,7 @@ func Load() (*Config, error) {
 
 	// Environment variable overrides
 	v.SetEnvPrefix("STATUSY")
-	v.SetEnvKeyReplacenomde
+	v.SetEnvKeyReplacer(strings.NewReplacer(".", "_"))
 
 	// Explicitly bind env vars so they always override config file values.
 	// Viper's AutomaticEnv() does NOT override keys already set in the file —

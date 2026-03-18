@@ -9,6 +9,9 @@ import Monitors from '@/pages/Monitors'
 import MonitorDetail from '@/pages/MonitorDetail'
 import Notifications from '@/pages/Notifications'
 import Users from '@/pages/Users'
+import StatusPages from '@/pages/StatusPages'
+import StatusPageView from '@/pages/StatusPageView'
+import Integrations from '@/pages/Integrations'
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth()
@@ -86,7 +89,25 @@ export default function App() {
                 </AdminRoute>
               }
             />
+            <Route
+              path="status-pages"
+              element={
+                <AdminRoute>
+                  <StatusPages />
+                </AdminRoute>
+              }
+            />
+            <Route
+              path="integrations"
+              element={
+                <AdminRoute>
+                  <Integrations />
+                </AdminRoute>
+              }
+            />
           </Route>
+          {/* Public status page — outside auth layout, no login required */}
+          <Route path="/status/:slug" element={<StatusPageView />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </BrowserRouter>

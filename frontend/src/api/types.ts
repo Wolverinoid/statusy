@@ -125,20 +125,49 @@ export interface NotificationFormData {
 // ── User ──────────────────────────────────────────────────────────────────────
 
 export interface User {
-  ID: number
-  Username: string
-  Email: string
-  DisplayName: string
-  Role: 'admin' | 'user'
-  AuthSource: 'local' | 'ldap'
-  Active: boolean
+  id: number
+  username: string
+  email: string
+  display_name: string
+  role: 'admin' | 'user'
+  auth_source: 'local' | 'ldap'
+  active: boolean
 }
 
 export interface UserFormData {
-  Username: string
-  Email: string
-  DisplayName: string
-  Password?: string
-  Role: 'admin' | 'user'
-  Active: boolean
+  username: string
+  email: string
+  display_name: string
+  password?: string
+  role: 'admin' | 'user'
+  active: boolean
+}
+
+// ── Integrations ─────────────────────────────────────────────────────────────
+
+export interface PrometheusIntegration {
+  enabled: boolean
+  url: string
+  basic_auth_user: string
+  basic_auth_pass: string
+}
+
+// ── Status Page ───────────────────────────────────────────────────────────────
+
+export interface StatusPage {
+  ID: number
+  CreatedAt: string
+  Name: string
+  Slug: string
+  Description: string
+  Public: boolean
+  Monitors: Monitor[]
+  Users: User[]
+}
+
+export interface StatusPageFormData {
+  name: string
+  slug: string
+  description: string
+  public: boolean
 }

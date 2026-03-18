@@ -39,6 +39,26 @@ func Authenticate(cfg *config.Config, db *gorm.DB) func(http.Handler) http.Handl
 	}
 }
 
+// AuthenticateOptional tries to parse the Bearer JWT but never blocks the request.
+// Claims are stored in context if valid; otherwise the request proceeds unauthenticated.
+func AuthenticateOptional(cfg *config.Config, db *gorm.DB) func(http.Handler) http.Handler {
+	return func(next http.Handler) http.Handler {
+		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			tokenStr := extractBearer(r)
+			if tokenStr != "" {
+				if claims, err := auth.ParseToken(tokenStr, cfg); err == nil {
+					blacklisted, err := auth.IsBlacklisted(db, claims.ID)
+					if err == nil && !blacklisted {
+						ctx := auth.StoreClaimsInContext(r.Context(), claims)
+						r = r.WithContext(ctx)
+					}
+				}
+			}
+			next.ServeHTTP(w, r)
+		})
+	}
+}
+
 // RequireAdmin rejects requests from non-admin users.
 func RequireAdmin(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

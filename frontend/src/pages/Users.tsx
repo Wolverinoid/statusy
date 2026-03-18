@@ -7,12 +7,12 @@ import { Plus, Trash2, Shield, User, Loader2 } from 'lucide-react'
 import type { UserFormData } from '@/api/types'
 
 const defaultForm = (): UserFormData => ({
-  Username: '',
-  Email: '',
-  DisplayName: '',
-  Password: '',
-  Role: 'user',
-  Active: true,
+  username: '',
+  email: '',
+  display_name: '',
+  password: '',
+  role: 'user',
+  active: true,
 })
 
 function UserForm({
@@ -32,24 +32,24 @@ function UserForm({
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="label">Username *</label>
-          <input className="input" value={form.Username} onChange={(e) => set('Username', e.target.value)} required placeholder="john" />
+          <input className="input" value={form.username} onChange={(e) => set('username', e.target.value)} required placeholder="john" />
         </div>
         <div>
           <label className="label">Display Name</label>
-          <input className="input" value={form.DisplayName} onChange={(e) => set('DisplayName', e.target.value)} placeholder="John Doe" />
+          <input className="input" value={form.display_name} onChange={(e) => set('display_name', e.target.value)} placeholder="John Doe" />
         </div>
       </div>
       <div>
         <label className="label">Email</label>
-        <input className="input" type="email" value={form.Email} onChange={(e) => set('Email', e.target.value)} placeholder="user@example.com" />
+        <input className="input" type="email" value={form.email} onChange={(e) => set('email', e.target.value)} placeholder="user@example.com" />
       </div>
       <div>
         <label className="label">{isEdit ? 'New Password (leave blank to keep)' : 'Password *'}</label>
         <input
           className="input"
           type="password"
-          value={form.Password ?? ''}
-          onChange={(e) => set('Password', e.target.value)}
+          value={form.password ?? ''}
+          onChange={(e) => set('password', e.target.value)}
           required={!isEdit}
           placeholder="••••••••"
         />
@@ -57,14 +57,14 @@ function UserForm({
       <div className="grid grid-cols-2 gap-3">
         <div>
           <label className="label">Role</label>
-          <select className="input" value={form.Role} onChange={(e) => set('Role', e.target.value as 'admin' | 'user')}>
+          <select className="input" value={form.role} onChange={(e) => set('role', e.target.value as 'admin' | 'user')}>
             <option value="user">User</option>
             <option value="admin">Admin</option>
           </select>
         </div>
         <div className="flex items-end pb-1">
           <label className="flex items-center gap-2 text-sm text-gray-400 cursor-pointer">
-            <input type="checkbox" checked={form.Active} onChange={(e) => set('Active', e.target.checked)} className="accent-indigo-500" />
+            <input type="checkbox" checked={form.active} onChange={(e) => set('active', e.target.checked)} className="accent-indigo-500" />
             Active
           </label>
         </div>
@@ -99,7 +99,7 @@ export default function Users() {
   })
   const deleteMut = useMutation({ mutationFn: usersApi.delete, onSuccess: () => { invalidate(); setDeleteId(null) } })
 
-  const editUser = users.find((u) => u.ID === editId)
+  const editUser = users.find((u) => u.id === editId)
 
   return (
     <div className="p-6 max-w-3xl mx-auto">
@@ -120,17 +120,17 @@ export default function Users() {
       ) : (
         <div className="space-y-2">
           {users.map((u) => (
-            <div key={u.ID} className="card p-4 flex items-center gap-4 group hover:border-gray-700 transition-colors">
-              <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${u.Role === 'admin' ? 'bg-indigo-600/20 text-indigo-400' : 'bg-gray-800 text-gray-500'}`}>
-                {u.Role === 'admin' ? <Shield className="w-4 h-4" /> : <User className="w-4 h-4" />}
+            <div key={u.id} className="card p-4 flex items-center gap-4 group hover:border-gray-700 transition-colors">
+              <div className={`w-8 h-8 rounded-lg flex items-center justify-center flex-shrink-0 ${u.role === 'admin' ? 'bg-indigo-600/20 text-indigo-400' : 'bg-gray-800 text-gray-500'}`}>
+                {u.role === 'admin' ? <Shield className="w-4 h-4" /> : <User className="w-4 h-4" />}
               </div>
               <div className="flex-1 min-w-0">
-                <p className="font-medium text-gray-200">{u.DisplayName || u.Username}</p>
-                <p className="text-xs text-gray-500">@{u.Username} · {u.Role} · {u.Active ? 'Active' : 'Disabled'}</p>
+                <p className="font-medium text-gray-200">{u.display_name || u.username}</p>
+                <p className="text-xs text-gray-500">@{u.username} · {u.role} · {u.active ? 'Active' : 'Disabled'}</p>
               </div>
               <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                 <button
-                  onClick={() => setDeleteId(u.ID)}
+                  onClick={() => setDeleteId(u.id)}
                   className="p-1.5 rounded-lg text-gray-500 hover:text-red-400 hover:bg-gray-800 transition-colors"
                   title="Delete"
                 >

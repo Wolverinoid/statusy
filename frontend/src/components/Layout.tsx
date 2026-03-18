@@ -1,7 +1,7 @@
 import { Outlet, NavLink, useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
 import {
-  LayoutDashboard, Activity, Bell, Users, LogOut, Radio,
+  LayoutDashboard, Activity, Bell, Users, LogOut, Radio, Globe, Plug,
 } from 'lucide-react'
 import clsx from 'clsx'
 
@@ -54,20 +54,50 @@ export default function Layout() {
           ))}
 
           {user?.role === 'admin' && (
-            <NavLink
-              to="/users"
-              className={({ isActive }) =>
-                clsx(
-                  'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
-                  isActive
-                    ? 'bg-indigo-600/20 text-indigo-400'
-                    : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800',
-                )
-              }
-            >
-              <Users className="w-4 h-4 flex-shrink-0" />
-              Users
-            </NavLink>
+            <>
+              <NavLink
+                to="/status-pages"
+                className={({ isActive }) =>
+                  clsx(
+                    'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                    isActive
+                      ? 'bg-indigo-600/20 text-indigo-400'
+                      : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800',
+                  )
+                }
+              >
+                <Globe className="w-4 h-4 flex-shrink-0" />
+                Status Pages
+              </NavLink>
+              <NavLink
+                to="/users"
+                className={({ isActive }) =>
+                  clsx(
+                    'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                    isActive
+                      ? 'bg-indigo-600/20 text-indigo-400'
+                      : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800',
+                  )
+                }
+              >
+                <Users className="w-4 h-4 flex-shrink-0" />
+                Users
+              </NavLink>
+              <NavLink
+                to="/integrations"
+                className={({ isActive }) =>
+                  clsx(
+                    'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                    isActive
+                      ? 'bg-indigo-600/20 text-indigo-400'
+                      : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800',
+                  )
+                }
+              >
+                <Plug className="w-4 h-4 flex-shrink-0" />
+                Integrations
+              </NavLink>
+            </>
           )}
         </nav>
 

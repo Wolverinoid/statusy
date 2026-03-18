@@ -4,6 +4,8 @@ import type {
   Monitor, MonitorFormData, CheckResult,
   Notification, NotificationFormData,
   User, UserFormData,
+  StatusPage, StatusPageFormData,
+  PrometheusIntegration,
 } from './types'
 
 // ── Axios instance ────────────────────────────────────────────────────────────
@@ -110,6 +112,44 @@ export const usersApi = {
 
   delete: (id: number) =>
     api.delete(`/users/${id}`).then((r) => r.data),
+}
+
+// ── Status Pages ──────────────────────────────────────────────────────────────
+
+export const statusPagesApi = {
+  list: () =>
+    api.get<StatusPage[]>('/status-pages').then((r) => r.data),
+
+  get: (id: number) =>
+    api.get<StatusPage>(`/status-pages/${id}`).then((r) => r.data),
+
+  create: (data: StatusPageFormData) =>
+    api.post<StatusPage>('/status-pages', data).then((r) => r.data),
+
+  update: (id: number, data: StatusPageFormData) =>
+    api.put<StatusPage>(`/status-pages/${id}`, data).then((r) => r.data),
+
+  delete: (id: number) =>
+    api.delete(`/status-pages/${id}`).then((r) => r.data),
+
+  setMonitors: (id: number, monitorIds: number[]) =>
+    api.put(`/status-pages/${id}/monitors`, { monitor_ids: monitorIds }).then((r) => r.data),
+
+  setUsers: (id: number, userIds: number[]) =>
+    api.put(`/status-pages/${id}/users`, { user_ids: userIds }).then((r) => r.data),
+
+  getPublic: (slug: string) =>
+    api.get<StatusPage>(`/status/${slug}`).then((r) => r.data),
+}
+
+// ── Integrations ─────────────────────────────────────────────────────────────
+
+export const integrationsApi = {
+  getPrometheus: () =>
+    api.get<PrometheusIntegration>('/admin/integrations/prometheus').then((r) => r.data),
+
+  savePrometheus: (data: PrometheusIntegration) =>
+    api.put<PrometheusIntegration>('/admin/integrations/prometheus', data).then((r) => r.data),
 }
 
 export default api

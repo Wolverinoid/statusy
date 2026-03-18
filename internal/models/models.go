@@ -153,6 +153,16 @@ type Notification struct {
 	Monitors []Monitor `gorm:"many2many:monitor_notifications"`
 }
 
+// ─── Integration ─────────────────────────────────────────────────────────────
+
+// Integration stores external integration settings (one row per integration type).
+type Integration struct {
+	gorm.Model
+	Name     string `gorm:"uniqueIndex;not null"` // e.g. "prometheus"
+	Enabled  bool   `gorm:"default:false"`
+	Config   string // JSON blob with integration-specific settings
+}
+
 // ─── Status Page ─────────────────────────────────────────────────────────────
 
 type StatusPage struct {

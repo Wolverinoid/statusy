@@ -12,6 +12,7 @@ import (
 	"github.com/statusy/statusy/config"
 	"github.com/statusy/statusy/internal/auth"
 	"github.com/statusy/statusy/internal/metrics"
+	"github.com/statusy/statusy/internal/models"
 	"github.com/statusy/statusy/internal/monitors"
 	"github.com/statusy/statusy/internal/notifications"
 	"gorm.io/gorm"
@@ -90,19 +91,33 @@ func NewRouter(
 		// LDAP test (admin only)
 		r.With(RequireAdmin).Post("/api/admin/ldap/test", ldapTest(cfg))
 
-		// Status pages
+		// Integrations (admin only)
+		r.Route("/api/admin/integrations", func(r chi.Router) {
+			r.Use(RequireAdmin)
+			r.Get("/prometheus", getPrometheusIntegration(db))
+			r.Put("/prometheus", putPrometheusIntegration(db))
+		})
+
+		// Status pages (admin only for management)
 		r.Route("/api/status-pages", func(r chi.Router) {
+			r.Use(RequireAdmin)
 			r.Get("/", listStatusPages(db))
 			r.Post("/", createStatusPage(db))
 			r.Get("/{id}", getStatusPage(db))
 			r.Put("/{id}", updateStatusPage(db))
 			r.Delete("/{id}", deleteStatusPage(db))
+			r.Put("/{id}/monitors", setStatusPageMonitors(db))
+			r.Put("/{id}/users", setStatusPageUsers(db))
 		})
+
 	})
 
 	// ── Prometheus metrics ────────────────────────────────────────────────────
+	// Public status page — optional auth (private pages need token)
+	r.With(AuthenticateOptional(cfg, db)).Get("/api/status/{slug}", publicStatusPage(db))
+
 	if cfg.Metrics.Enabled {
-		r.Get("/metrics", metricsHandler(cfg, metricsReg))
+		r.Get("/metrics", metricsHandler(cfg, metricsReg, db))
 	}
 
 	// ── Health check ──────────────────────────────────────────────────────────
@@ -139,9 +154,11 @@ func spaHandler(fileServer http.Handler, distFS fs.FS) http.HandlerFunc {
 	}
 }
 
-// metricsHandler serves Prometheus metrics with optional bearer token auth.
-func metricsHandler(cfg *config.Config, reg *metrics.Registry) http.HandlerFunc {
+// metricsHandler serves Prometheus metrics with optional bearer token auth (config)
+// and optional HTTP basic auth (stored in DB via integrations).
+func metricsHandler(cfg *config.Config, reg *metrics.Registry, db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
+		// Bearer token auth from config file (legacy)
 		if cfg.Metrics.BearerToken != "" {
 			token := r.Header.Get("Authorization")
 			if token != "Bearer "+cfg.Metrics.BearerToken {
@@ -149,6 +166,36 @@ func metricsHandler(cfg *config.Config, reg *metrics.Registry) http.HandlerFunc 
 				return
 			}
 		}
+
+		// Basic auth from DB integration settings
+		if db != nil {
+			promCfg, err := loadPrometheusIntegrationConfig(db)
+			if err == nil && promCfg != nil && (promCfg.BasicAuthUser != "" || promCfg.BasicAuthPass != "") {
+				user, pass, ok := r.BasicAuth()
+				if !ok || user != promCfg.BasicAuthUser || pass != promCfg.BasicAuthPass {
+					w.Header().Set("WWW-Authenticate", `Basic realm="Statusy Metrics"`)
+					http.Error(w, "unauthorized", http.StatusUnauthorized)
+					return
+				}
+			}
+		}
+
 		reg.Handler().ServeHTTP(w, r)
 	}
+}
+
+// loadPrometheusIntegrationConfig reads the Prometheus integration config from DB.
+func loadPrometheusIntegrationConfig(db *gorm.DB) (*PrometheusConfig, error) {
+	var integration models.Integration
+	if err := db.Where("name = ?", "prometheus").First(&integration).Error; err != nil {
+		return nil, err
+	}
+	if !integration.Enabled {
+		return nil, nil
+	}
+	var cfg PrometheusConfig
+	if err := json.Unmarshal([]byte(integration.Config), &cfg); err != nil {
+		return nil, err
+	}
+	return &cfg, nil
 }

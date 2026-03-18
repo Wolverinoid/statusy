@@ -55,5 +55,6 @@ func Migrate(db *gorm.DB) error {
 		&models.CheckResult{},
 		&models.Notification{},
 		&models.StatusPage{},
+		&models.Integration{},
 	)
 }
