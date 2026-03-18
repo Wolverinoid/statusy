@@ -1,7 +1,6 @@
 import { useParams, Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { statusPagesApi } from '@/api/client'
-import { monitorsApi } from '@/api/client'
 import UptimeBars from '@/components/UptimeBars'
 import { CheckCircle2, XCircle, Clock, Wrench, AlertTriangle, ArrowLeft } from 'lucide-react'
 import type { Monitor } from '@/api/types'
@@ -90,37 +89,33 @@ function OverallBanner({ monitors }: { monitors: Monitor[] }) {
 // ── Monitor row ───────────────────────────────────────────────────────────────
 
 function MonitorRow({ monitor }: { monitor: Monitor }) {
-  // Fetch latest check for response time
-  const { data: history = [] } = useQuery({
-    queryKey: ['monitor-history-bars', monitor.ID],
-    queryFn: () => monitorsApi.history(monitor.ID),
-    staleTime: 60_000,
-  })
-
-  const latest = history[0]
-
   return (
     <div className="card p-4">
+      {/* Single row: icon | name+type | bars | status label */}
       <div className="flex items-center gap-3">
-        <StatusIcon status={monitor.Status} />
-        <div className="flex-1 min-w-0">
-          <p className="font-medium text-gray-100">{monitor.Name}</p>
-          {(monitor.URL || monitor.Host || monitor.Domain) && (
-            <p className="text-xs text-gray-500 truncate mt-0.5">
-              {monitor.URL || monitor.Host || monitor.Domain}
-            </p>
-          )}
+        <div className="flex-shrink-0">
+          <StatusIcon status={monitor.Status} />
         </div>
-        <div className="text-right flex-shrink-0">
+
+        {/* Name — fixed width so bars always get remaining space */}
+        <div className="flex items-center gap-2 min-w-0 flex-shrink-0 w-40 sm:w-52">
+          <p className="font-medium text-gray-100 truncate" title={monitor.Name}>
+            {monitor.Name}
+          </p>
+        </div>
+
+        {/* Uptime bars — fills remaining space */}
+        <div className="flex-1 min-w-0">
+          <UptimeBars monitorId={monitor.ID} compact />
+        </div>
+
+        {/* Status label */}
+        <div className="flex-shrink-0 text-right">
           <p className={`text-sm font-medium ${statusTextColor(monitor.Status)}`}>
             {statusLabel(monitor.Status)}
           </p>
-          {latest?.ResponseTimeMs > 0 && (
-            <p className="text-xs text-gray-500 mt-0.5">{latest.ResponseTimeMs}ms</p>
-          )}
         </div>
       </div>
-      <UptimeBars monitorId={monitor.ID} />
     </div>
   )
 }
