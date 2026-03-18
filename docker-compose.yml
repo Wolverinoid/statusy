@@ -1,0 +1,33 @@
+version: "3.9"
+
+services:
+  statusy:
+    build: .
+    ports:
+      - "${PORT:-8080}:${PORT:-8080}"
+    volumes:
+      - statusy_data:/app/data
+    environment:
+      - STATUSY_SERVER_ADDRESS=:${PORT:-8080}
+    stdin_open: true
+    tty: true
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:${PORT:-8080}/api/health"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+
+  # Optional: PostgreSQL backend
+  # postgres:
+  #   image: postgres:16-alpine
+  #   environment:
+  #     POSTGRES_DB: statusy
+  #     POSTGRES_USER: statusy
+  #     POSTGRES_PASSWORD: secret
+  #   volumes:
+  #     - pg_data:/var/lib/postgresql/data
+
+volumes:
+  statusy_data:
+  # pg_data:
