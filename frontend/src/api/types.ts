@@ -63,6 +63,7 @@ export interface Monitor {
   Domain: string
   WarnDaysExpiry: number
   MaxResponseTimeMs: number
+  LastMessage: string
 }
 
 export interface MonitorFormData {

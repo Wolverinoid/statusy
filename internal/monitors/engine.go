@@ -2,7 +2,9 @@ package monitors
 
 import (
 	"context"
+	"fmt"
 	"log/slog"
+	"strings"
 	"sync"
 	"time"
 
@@ -22,6 +24,10 @@ type Engine struct {
 	mu      sync.Mutex
 	workers map[uint]*worker // monitor ID → worker
 	stopCh  chan struct{}
+
+	// certNotifyMu guards certNotifiedOn
+	certNotifyMu  sync.Mutex
+	certNotifiedOn map[uint]time.Time // monitor ID → last cert-expiry notification date (UTC day)
 }
 
 type worker struct {
@@ -31,12 +37,13 @@ type worker struct {
 // NewEngine creates a new monitor engine.
 func NewEngine(db *gorm.DB, dispatcher *notifications.Dispatcher, reg *metrics.Registry, logger *slog.Logger) *Engine {
 	return &Engine{
-		db:         db,
-		dispatcher: dispatcher,
-		metrics:    reg,
-		logger:     logger,
-		workers:    make(map[uint]*worker),
-		stopCh:     make(chan struct{}),
+		db:             db,
+		dispatcher:     dispatcher,
+		metrics:        reg,
+		logger:         logger,
+		workers:        make(map[uint]*worker),
+		stopCh:         make(chan struct{}),
+		certNotifiedOn: make(map[uint]time.Time),
 	}
 }
 
@@ -170,6 +177,9 @@ func (e *Engine) runCheck(ctx context.Context, m *models.Monitor) {
 	// Update Prometheus metrics
 	e.metrics.UpdateMonitor(m, status, responseTime)
 
+	// Always persist last message (for UI display)
+	e.db.Model(m).UpdateColumn("last_message", message)
+
 	// Detect status change
 	previousStatus := m.Status
 	if status != previousStatus {
@@ -209,6 +219,89 @@ func (e *Engine) runCheck(ctx context.Context, m *models.Monitor) {
 		// Increment consecutive failures counter
 		e.db.Model(m).UpdateColumn("consecutive_failures", gorm.Expr("consecutive_failures + 1"))
 	}
+
+	// TLS cert expiry warning: fire daily notifications for HTTPS monitors
+	// when cert expires within 7 days (independent of UP/DOWN status change).
+	if m.Type == models.MonitorHTTP && strings.HasPrefix(strings.ToLower(m.URL), "https://") {
+		e.maybeSendCertExpiryNotification(m, message)
+	}
+}
+
+// maybeSendCertExpiryNotification sends a daily cert-expiry warning notification
+// when the TLS cert expires within 7 days. It fires at most once per UTC day.
+func (e *Engine) maybeSendCertExpiryNotification(m *models.Monitor, message string) {
+	// The cert expiry info is embedded in the check message by checkHTTP.
+	// We only act when the message contains "TLS cert valid until" with ≤7 days,
+	// or when the monitor is DOWN due to an expired cert.
+	const warnDays = 7
+
+	// Parse days remaining from message — look for "(%d days)" pattern.
+	var daysRemaining int
+	var certWarning bool
+	if strings.Contains(message, "TLS cert valid until") {
+		// e.g. "HTTP 200, TLS cert valid until 2025-06-01 (3 days)"
+		n, err := parseDaysFromMessage(message)
+		if err == nil && n <= warnDays {
+			daysRemaining = n
+			certWarning = true
+		}
+	} else if strings.Contains(message, "TLS certificate expired") {
+		daysRemaining = 0
+		certWarning = true
+	}
+
+	if !certWarning {
+		return
+	}
+
+	// Check if we already sent a notification today (UTC day).
+	today := time.Now().UTC().Truncate(24 * time.Hour)
+	e.certNotifyMu.Lock()
+	lastSent := e.certNotifiedOn[m.ID]
+	if !lastSent.Before(today) {
+		e.certNotifyMu.Unlock()
+		return // already notified today
+	}
+	e.certNotifiedOn[m.ID] = today
+	e.certNotifyMu.Unlock()
+
+	// Build warning message
+	var warnMsg string
+	if daysRemaining <= 0 {
+		warnMsg = message
+	} else {
+		warnMsg = fmt.Sprintf("TLS certificate expires in %d day(s) — please renew soon! (%s)", daysRemaining, message)
+	}
+
+	// Load notification channels and send
+	var notifs []models.Notification
+	e.db.Model(m).Association("Notifications").Find(&notifs)
+	for _, n := range notifs {
+		if !n.Active {
+			continue
+		}
+		e.dispatcher.Send(notifications.Alert{
+			MonitorID:   m.ID,
+			MonitorName: m.Name,
+			Status:      "CERT_EXPIRY",
+			Message:     warnMsg,
+			Channel:     n,
+		})
+	}
+}
+
+// parseDaysFromMessage extracts the days number from a message like
+// "HTTP 200, TLS cert valid until 2025-06-01 (3 days)".
+func parseDaysFromMessage(msg string) (int, error) {
+	// Find "(%d days)" suffix
+	start := strings.LastIndex(msg, "(")
+	end := strings.LastIndex(msg, " days)")
+	if start < 0 || end < 0 || end <= start {
+		return 0, fmt.Errorf("pattern not found")
+	}
+	var days int
+	_, err := fmt.Sscanf(msg[start+1:end], "%d", &days)
+	return days, err
 }
 
 func consecutiveFailures(status models.MonitorStatus, current int) int {

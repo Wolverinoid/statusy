@@ -109,6 +109,9 @@ type Monitor struct {
 	// Response time threshold (ms)
 	MaxResponseTimeMs int
 
+	// Last check message (stored for display in UI)
+	LastMessage string
+
 	// Consecutive failures counter (for noise reduction)
 	ConsecutiveFailures int `gorm:"default:0"`
 

@@ -8,6 +8,7 @@ import (
 	"io"
 	"net"
 	"net/http"
+	"net/url"
 	"strings"
 	"time"
 
@@ -44,6 +45,33 @@ func RunCheck(ctx context.Context, m *models.Monitor) (models.MonitorStatus, str
 
 // ─── HTTP ─────────────────────────────────────────────────────────────────────
 
+// tlsCertExpiry dials the HTTPS host and returns the leaf certificate expiry time.
+func tlsCertExpiry(ctx context.Context, rawURL string) (time.Time, error) {
+	parsed, err := url.Parse(rawURL)
+	if err != nil {
+		return time.Time{}, fmt.Errorf("invalid URL: %v", err)
+	}
+	host := parsed.Hostname()
+	port := parsed.Port()
+	if port == "" {
+		port = "443"
+	}
+	dialer := &tls.Dialer{
+		NetDialer: &net.Dialer{},
+		Config:    &tls.Config{ServerName: host},
+	}
+	conn, err := dialer.DialContext(ctx, "tcp", host+":"+port)
+	if err != nil {
+		return time.Time{}, fmt.Errorf("TLS dial failed: %v", err)
+	}
+	defer conn.Close()
+	certs := conn.(*tls.Conn).ConnectionState().PeerCertificates
+	if len(certs) == 0 {
+		return time.Time{}, fmt.Errorf("no certificates found")
+	}
+	return certs[0].NotAfter, nil
+}
+
 func checkHTTP(ctx context.Context, m *models.Monitor) (models.MonitorStatus, string) {
 	method := m.Method
 	if method == "" {
@@ -79,6 +107,22 @@ func checkHTTP(ctx context.Context, m *models.Monitor) (models.MonitorStatus, st
 
 	if resp.StatusCode != expected {
 		return models.StatusDown, fmt.Sprintf("expected status %d, got %d", expected, resp.StatusCode)
+	}
+
+	// TLS certificate check — automatic for all HTTPS monitors
+	if strings.HasPrefix(strings.ToLower(m.URL), "https://") {
+		expiry, err := tlsCertExpiry(ctx, m.URL)
+		if err != nil {
+			// Don't fail the whole check on TLS dial error (HTTP already succeeded)
+			return models.StatusUp, fmt.Sprintf("HTTP %d (TLS cert check failed: %v)", resp.StatusCode, err)
+		}
+		daysRemaining := int(time.Until(expiry).Hours() / 24)
+		if daysRemaining <= 0 {
+			// Cert is actually expired — mark DOWN
+			return models.StatusDown, fmt.Sprintf("TLS certificate expired on %s", expiry.Format("2006-01-02"))
+		}
+		// Include expiry info in message; engine handles warning notifications
+		return models.StatusUp, fmt.Sprintf("HTTP %d, TLS cert valid until %s (%d days)", resp.StatusCode, expiry.Format("2006-01-02"), daysRemaining)
 	}
 
 	return models.StatusUp, fmt.Sprintf("HTTP %d", resp.StatusCode)
