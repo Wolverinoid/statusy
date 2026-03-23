@@ -8,6 +8,7 @@
   * {
     @apply border-gray-800/60;
   }
+  /* ── Dark (default) ── */
   body {
     @apply bg-gray-950 text-gray-100;
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
@@ -24,6 +25,17 @@
   ::-webkit-scrollbar-thumb:hover {
     @apply bg-cyan-900/60;
   }
+}
+
+/* ── Light base overrides (outside @layer to avoid nesting issues) ── */
+html:not(.dark) body {
+  @apply bg-slate-50 text-gray-900;
+}
+html:not(.dark) * {
+  border-color: rgba(226, 232, 240, 0.8); /* slate-200/80 */
+}
+html:not(.dark) ::-webkit-scrollbar-thumb {
+  @apply bg-slate-300 rounded-full;
 }
 
 @layer components {
@@ -113,3 +125,71 @@
     @apply text-xs px-1.5 py-0.5 rounded font-mono bg-gray-800/80 text-gray-500 border border-gray-700/40;
   }
 }
+
+/* ════════════════════════════════════════════
+   LIGHT THEME OVERRIDES  (html:not(.dark) …)
+   ════════════════════════════════════════════ */
+
+/* Buttons */
+html:not(.dark) .btn-primary {
+  @apply bg-cyan-500 hover:bg-cyan-600 text-white shadow-none;
+}
+html:not(.dark) .btn-secondary {
+  @apply bg-white hover:bg-slate-100 text-gray-700 border-slate-300 hover:border-slate-400;
+}
+html:not(.dark) .btn-danger {
+  @apply bg-red-50 hover:bg-red-100 text-red-600 border-red-200 hover:border-red-300;
+}
+
+/* Cards */
+html:not(.dark) .card {
+  @apply bg-white border-slate-200 shadow-sm shadow-slate-200/60;
+}
+html:not(.dark) .card-hover {
+  @apply hover:border-slate-300 hover:bg-white hover:shadow-md hover:shadow-slate-200/60;
+}
+html:not(.dark) .card-accent {
+  @apply bg-white border-slate-200 border-l-cyan-500/70 shadow-sm;
+}
+
+/* Inputs */
+html:not(.dark) .input {
+  @apply bg-white border-slate-300 text-gray-900 placeholder-slate-400
+         focus:ring-cyan-500/40 focus:border-cyan-500/60;
+}
+html:not(.dark) .label {
+  @apply text-slate-500;
+}
+
+/* Nav */
+html:not(.dark) .nav-item-active {
+  @apply bg-cyan-50 text-cyan-700 border-cyan-200;
+}
+html:not(.dark) .nav-item-inactive {
+  @apply text-slate-500 hover:text-slate-800 hover:bg-slate-100;
+}
+
+/* Stat card */
+html:not(.dark) .stat-card {
+  @apply bg-white border-slate-200 shadow-sm;
+}
+
+/* Section header */
+html:not(.dark) .section-header {
+  @apply text-slate-400;
+}
+
+/* Divider */
+html:not(.dark) .divider {
+  @apply border-slate-200;
+}
+
+/* Tag */
+html:not(.dark) .tag {
+  @apply bg-slate-100 text-slate-500 border-slate-200;
+}
+
+/* Glows — softer in light mode */
+html:not(.dark) .glow-green { box-shadow: 0 0 6px 1px rgba(16, 185, 129, 0.35); }
+html:not(.dark) .glow-red   { box-shadow: 0 0 6px 1px rgba(239, 68, 68, 0.35); }
+html:not(.dark) .glow-cyan  { box-shadow: 0 0 6px 1px rgba(6, 182, 212, 0.35); }

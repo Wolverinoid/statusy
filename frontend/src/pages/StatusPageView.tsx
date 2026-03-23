@@ -5,6 +5,7 @@ import UptimeBars from '@/components/UptimeBars'
 import { CheckCircle2, XCircle, Clock, Wrench, AlertTriangle, ArrowLeft } from 'lucide-react'
 import type { Monitor } from '@/api/types'
 
+
 // ── Status helpers ────────────────────────────────────────────────────────────
 
 function StatusIcon({ status }: { status: Monitor['Status'] }) {
@@ -39,9 +40,9 @@ function statusTextColor(status: Monitor['Status']) {
 function OverallBanner({ monitors }: { monitors: Monitor[] }) {
   if (!monitors.length) {
     return (
-      <div className="rounded-xl bg-gray-800 border border-gray-700 p-5 flex items-center gap-3">
+      <div className="rounded-xl bg-gray-800 dark:bg-gray-800 border border-gray-700 dark:border-gray-700 p-5 flex items-center gap-3 bg-slate-100 border-slate-200">
         <AlertTriangle className="w-6 h-6 text-gray-500" />
-        <span className="font-medium text-gray-400">No monitors configured</span>
+        <span className="font-medium text-gray-400 dark:text-gray-400 text-slate-600">No monitors configured</span>
       </div>
     )
   }
@@ -99,7 +100,7 @@ function MonitorRow({ monitor }: { monitor: Monitor }) {
 
         {/* Name — fixed width so bars always get remaining space */}
         <div className="flex items-center gap-2 min-w-0 flex-shrink-0 w-40 sm:w-52">
-          <p className="font-medium text-gray-100 truncate" title={monitor.Name}>
+          <p className="font-medium dark:text-gray-100 text-gray-800 truncate" title={monitor.Name}>
             {monitor.Name}
           </p>
         </div>
@@ -134,7 +135,7 @@ export default function StatusPageView() {
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center">
+      <div className="min-h-screen dark:bg-gray-950 bg-slate-50 flex items-center justify-center">
         <div className="w-6 h-6 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin" />
       </div>
     )
@@ -146,16 +147,16 @@ export default function StatusPageView() {
     const is403 = msg?.includes('access denied')
 
     return (
-      <div className="min-h-screen bg-gray-950 flex items-center justify-center p-6">
+      <div className="min-h-screen dark:bg-gray-950 bg-slate-50 flex items-center justify-center p-6">
         <div className="text-center max-w-sm">
           {is401 || is403
-            ? <Lock className="w-12 h-12 text-gray-600 mx-auto mb-4" />
-            : <AlertTriangle className="w-12 h-12 text-gray-600 mx-auto mb-4" />
+            ? <Lock className="w-12 h-12 text-gray-400 dark:text-gray-600 mx-auto mb-4" />
+            : <AlertTriangle className="w-12 h-12 text-gray-400 dark:text-gray-600 mx-auto mb-4" />
           }
-          <h1 className="text-xl font-bold text-gray-200 mb-2">
+          <h1 className="text-xl font-bold dark:text-gray-200 text-gray-800 mb-2">
             {is401 ? 'Private Status Page' : is403 ? 'Access Denied' : 'Page Not Found'}
           </h1>
-          <p className="text-gray-500 text-sm mb-6">
+          <p className="dark:text-gray-500 text-slate-500 text-sm mb-6">
             {is401 ? 'This status page requires authentication.' :
              is403 ? "You don't have access to this status page." :
              "The status page you're looking for doesn't exist."}
@@ -172,15 +173,15 @@ export default function StatusPageView() {
   const lastUpdated = new Date().toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' })
 
   return (
-    <div className="min-h-screen bg-gray-950">
+    <div className="min-h-screen dark:bg-gray-950 bg-slate-50">
       {/* Header */}
-      <div className="border-b border-gray-800 bg-gray-900/50 backdrop-blur-sm sticky top-0 z-10">
+      <div className="border-b dark:border-gray-800 border-slate-200 dark:bg-gray-900/50 bg-white/80 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-3xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse glow-cyan" />
-            <span className="font-semibold text-gray-100">{page.Name}</span>
+            <span className="font-semibold dark:text-gray-100 text-gray-800">{page.Name}</span>
           </div>
-          <span className="text-xs text-gray-500">Updated {lastUpdated}</span>
+          <span className="text-xs dark:text-gray-500 text-slate-400">Updated {lastUpdated}</span>
         </div>
       </div>
 
@@ -188,7 +189,7 @@ export default function StatusPageView() {
       <div className="max-w-3xl mx-auto px-6 py-10 space-y-6">
         {/* Description */}
         {page.Description && (
-          <p className="text-gray-400 text-sm">{page.Description}</p>
+          <p className="dark:text-gray-400 text-slate-500 text-sm">{page.Description}</p>
         )}
 
         {/* Overall status banner */}
@@ -197,7 +198,7 @@ export default function StatusPageView() {
         {/* Monitor list */}
         {monitors.length > 0 && (
           <div className="space-y-3">
-            <h2 className="text-sm font-medium text-gray-500 uppercase tracking-wider">Services</h2>
+            <h2 className="text-sm font-medium dark:text-gray-500 text-slate-400 uppercase tracking-wider">Services</h2>
             {monitors.map((m) => (
               <MonitorRow key={m.ID} monitor={m} />
             ))}
@@ -205,11 +206,11 @@ export default function StatusPageView() {
         )}
 
         {/* Footer */}
-        <div className="pt-6 border-t border-gray-800 flex items-center justify-between">
-          <p className="text-xs text-gray-600">
-            Powered by <span className="text-gray-500">Statusy</span>
+        <div className="pt-6 border-t dark:border-gray-800 border-slate-200 flex items-center justify-between">
+          <p className="text-xs dark:text-gray-600 text-slate-400">
+            Powered by <span className="dark:text-gray-500 text-slate-500">Statusy</span>
           </p>
-          <Link to="/" className="flex items-center gap-1.5 text-xs text-gray-600 hover:text-gray-400 transition-colors">
+          <Link to="/" className="flex items-center gap-1.5 text-xs dark:text-gray-600 text-slate-400 dark:hover:text-gray-400 hover:text-slate-600 transition-colors">
             <ArrowLeft className="w-3 h-3" /> Dashboard
           </Link>
         </div>

@@ -53,7 +53,7 @@ export default function MonitorCard({ monitor, onPause, onResume, onDelete }: Pr
         <div className="flex items-center gap-2 min-w-0 flex-shrink-0 w-40 sm:w-52">
           <Link
             to={`/monitors/${monitor.ID}`}
-            className="font-medium text-gray-200 hover:text-cyan-400 transition-colors truncate"
+            className="font-medium dark:text-gray-200 text-gray-700 hover:text-cyan-500 transition-colors truncate"
             title={monitor.Name}
           >
             {monitor.Name}
@@ -93,8 +93,8 @@ export default function MonitorCard({ monitor, onPause, onResume, onDelete }: Pr
               {tls.days === 0 ? 'Cert expired' : `TLS ${tls.date}`}
             </span>
             {/* Hover tooltip */}
-            <div className="absolute bottom-full right-0 mb-2 w-52 bg-gray-900 border border-gray-700 rounded-lg p-3 shadow-xl opacity-0 group-hover/tls:opacity-100 pointer-events-none transition-opacity z-50">
-              <p className="text-xs font-semibold text-gray-200 mb-2">TLS Certificate</p>
+            <div className="absolute bottom-full right-0 mb-2 w-52 dark:bg-gray-900 bg-white dark:border-gray-700 border-slate-200 rounded-lg p-3 shadow-xl opacity-0 group-hover/tls:opacity-100 pointer-events-none transition-opacity z-50">
+              <p className="text-xs font-semibold dark:text-gray-200 text-gray-700 mb-2">TLS Certificate</p>
               <div className="space-y-1">
                 <div className="flex justify-between text-xs">
                   <span className="text-gray-500">Expires</span>

@@ -63,8 +63,8 @@ export default function Dashboard() {
       {/* Header */}
       <div className="mb-7 flex items-start justify-between">
         <div>
-          <h1 className="text-xl font-bold text-gray-100 tracking-tight">Dashboard</h1>
-          <p className="text-xs text-gray-600 mt-1 font-mono">
+          <h1 className="text-xl font-bold dark:text-gray-100 text-gray-900 tracking-tight">Dashboard</h1>
+          <p className="text-xs dark:text-gray-600 text-slate-400 mt-1 font-mono">
             {monitors.length} monitor{monitors.length !== 1 ? 's' : ''} tracked
             {uptimePct !== null && (
               <span className="ml-2 text-cyan-600">· {uptimePct}% up</span>
@@ -72,10 +72,10 @@ export default function Dashboard() {
           </p>
         </div>
         {uptimePct !== null && (
-          <div className="flex items-center gap-1.5 text-xs text-gray-600">
+          <div className="flex items-center gap-1.5 text-xs dark:text-gray-600 text-slate-400">
             <TrendingUp className="w-3.5 h-3.5 text-cyan-600" />
             <span className="font-mono text-cyan-600 font-semibold">{uptimePct}%</span>
-            <span className="text-gray-700">overall uptime</span>
+            <span className="dark:text-gray-700 text-slate-400">overall uptime</span>
           </div>
         )}
       </div>
@@ -101,11 +101,11 @@ export default function Dashboard() {
               <Link
                 key={m.ID}
                 to={`/monitors/${m.ID}`}
-                className="card p-3.5 flex items-center gap-3 hover:border-red-800/40 transition-all duration-200 border-l-2 border-l-red-500/50 bg-red-950/10 group"
+                className="card p-3.5 flex items-center gap-3 hover:border-red-800/40 transition-all duration-200 border-l-2 border-l-red-500/50 dark:bg-red-950/10 bg-red-50/60 group"
               >
                 <XCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
-                <span className="font-medium text-gray-200 flex-1 text-sm">{m.Name}</span>
-                <span className="text-xs text-gray-600 truncate max-w-xs hidden sm:block font-mono">{m.URL || m.Host || m.Domain}</span>
+                <span className="font-medium dark:text-gray-200 text-gray-700 flex-1 text-sm">{m.Name}</span>
+                <span className="text-xs dark:text-gray-600 text-slate-400 truncate max-w-xs hidden sm:block font-mono">{m.URL || m.Host || m.Domain}</span>
                 <ArrowRight className="w-3.5 h-3.5 text-gray-700 group-hover:text-red-500 transition-colors flex-shrink-0" />
               </Link>
             ))}
@@ -140,8 +140,8 @@ export default function Dashboard() {
                 className="card p-3.5 flex items-center gap-3 hover:border-gray-700/60 hover:bg-gray-900/80 transition-all duration-200 group"
               >
                 <StatusBadge status={m.Status} size="sm" />
-                <span className="flex-1 font-medium text-gray-300 truncate text-sm group-hover:text-gray-100 transition-colors">{m.Name}</span>
-                <span className="text-xs text-gray-700 hidden sm:block truncate max-w-xs font-mono">
+                <span className="flex-1 font-medium dark:text-gray-300 text-gray-700 truncate text-sm dark:group-hover:text-gray-100 group-hover:text-gray-900 transition-colors">{m.Name}</span>
+                <span className="text-xs dark:text-gray-700 text-slate-400 hidden sm:block truncate max-w-xs font-mono">
                   {m.URL || m.Host || m.Domain || '—'}
                 </span>
                 <ArrowRight className="w-3.5 h-3.5 text-gray-700 group-hover:text-gray-500 transition-colors flex-shrink-0" />

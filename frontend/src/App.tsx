@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'
+import { ThemeProvider } from '@/contexts/ThemeContext'
 import Layout from '@/components/Layout'
 import Login from '@/pages/Login'
 import Setup from '@/pages/Setup'
@@ -17,8 +18,8 @@ function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { user, isLoading } = useAuth()
   if (isLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-950">
-        <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen flex items-center justify-center bg-gray-950 dark:bg-gray-950 bg-slate-50">
+        <div className="w-6 h-6 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
@@ -47,8 +48,8 @@ function SetupGuard({ children }: { children: React.ReactNode }) {
 
   if (!checked) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gray-950">
-        <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+      <div className="min-h-screen flex items-center justify-center bg-gray-950 dark:bg-gray-950">
+        <div className="w-6 h-6 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
@@ -62,55 +63,57 @@ function SetupGuard({ children }: { children: React.ReactNode }) {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <BrowserRouter>
-        <Routes>
-          <Route path="/setup" element={<Setup />} />
-          <Route path="/login" element={<SetupGuard><Login /></SetupGuard>} />
-          <Route
-            path="/"
-            element={
-              <SetupGuard>
-                <PrivateRoute>
-                  <Layout />
-                </PrivateRoute>
-              </SetupGuard>
-            }
-          >
-            <Route index element={<Dashboard />} />
-            <Route path="monitors" element={<Monitors />} />
-            <Route path="monitors/:id" element={<MonitorDetail />} />
-            <Route path="notifications" element={<Notifications />} />
+    <ThemeProvider>
+      <AuthProvider>
+        <BrowserRouter>
+          <Routes>
+            <Route path="/setup" element={<Setup />} />
+            <Route path="/login" element={<SetupGuard><Login /></SetupGuard>} />
             <Route
-              path="users"
+              path="/"
               element={
-                <AdminRoute>
-                  <Users />
-                </AdminRoute>
+                <SetupGuard>
+                  <PrivateRoute>
+                    <Layout />
+                  </PrivateRoute>
+                </SetupGuard>
               }
-            />
-            <Route
-              path="status-pages"
-              element={
-                <AdminRoute>
-                  <StatusPages />
-                </AdminRoute>
-              }
-            />
-            <Route
-              path="integrations"
-              element={
-                <AdminRoute>
-                  <Integrations />
-                </AdminRoute>
-              }
-            />
-          </Route>
-          {/* Public status page — outside auth layout, no login required */}
-          <Route path="/status/:slug" element={<StatusPageView />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-      </BrowserRouter>
-    </AuthProvider>
+            >
+              <Route index element={<Dashboard />} />
+              <Route path="monitors" element={<Monitors />} />
+              <Route path="monitors/:id" element={<MonitorDetail />} />
+              <Route path="notifications" element={<Notifications />} />
+              <Route
+                path="users"
+                element={
+                  <AdminRoute>
+                    <Users />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path="status-pages"
+                element={
+                  <AdminRoute>
+                    <StatusPages />
+                  </AdminRoute>
+                }
+              />
+              <Route
+                path="integrations"
+                element={
+                  <AdminRoute>
+                    <Integrations />
+                  </AdminRoute>
+                }
+              />
+            </Route>
+            {/* Public status page — outside auth layout, no login required */}
+            <Route path="/status/:slug" element={<StatusPageView />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
+          </Routes>
+        </BrowserRouter>
+      </AuthProvider>
+    </ThemeProvider>
   )
 }

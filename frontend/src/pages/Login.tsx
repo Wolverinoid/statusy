@@ -26,7 +26,7 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 flex items-center justify-center p-4 relative overflow-hidden">
+    <div className="min-h-screen dark:bg-gray-950 bg-slate-50 flex items-center justify-center p-4 relative overflow-hidden">
       {/* Dot grid background */}
       <div
         className="absolute inset-0 opacity-100"
@@ -37,8 +37,8 @@ export default function Login() {
       />
 
       {/* Ambient glows */}
-      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-cyan-500/5 rounded-full blur-3xl pointer-events-none" />
-      <div className="absolute bottom-1/4 left-1/4 w-48 h-48 bg-cyan-600/8 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[300px] dark:bg-cyan-500/5 bg-cyan-500/8 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-1/4 left-1/4 w-48 h-48 dark:bg-cyan-600/8 bg-cyan-400/10 rounded-full blur-3xl pointer-events-none" />
 
       {/* Horizontal scan line effect */}
       <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-500/30 to-transparent" />
@@ -53,12 +53,12 @@ export default function Login() {
               <Radio className="w-8 h-8 text-cyan-400" />
             </div>
           </div>
-          <h1 className="text-2xl font-bold text-white tracking-tight">Statusy</h1>
-          <p className="text-xs text-gray-600 mt-1.5 font-mono uppercase tracking-widest">monitoring dashboard</p>
+          <h1 className="text-2xl font-bold dark:text-white text-gray-900 tracking-tight">Statusy</h1>
+          <p className="text-xs dark:text-gray-600 text-slate-400 mt-1.5 font-mono uppercase tracking-widest">monitoring dashboard</p>
         </div>
 
         {/* Card */}
-        <div className="bg-gray-900/80 border border-gray-800/80 rounded-2xl p-6 shadow-2xl shadow-black/60 backdrop-blur-sm relative overflow-hidden">
+        <div className="dark:bg-gray-900/80 bg-white dark:border-gray-800/80 border-slate-200 border rounded-2xl p-6 dark:shadow-2xl dark:shadow-black/60 shadow-lg shadow-slate-200/80 backdrop-blur-sm relative overflow-hidden">
           {/* Top accent line */}
           <div className="absolute top-0 left-6 right-6 h-px bg-gradient-to-r from-transparent via-cyan-500/40 to-transparent" />
 
@@ -107,7 +107,7 @@ export default function Login() {
         </div>
 
         {/* Footer hint */}
-        <p className="text-center text-xs text-gray-700 mt-5 font-mono">
+        <p className="text-center text-xs dark:text-gray-700 text-slate-400 mt-5 font-mono">
           self-hosted · open source
         </p>
       </div>

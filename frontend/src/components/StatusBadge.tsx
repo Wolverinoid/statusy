@@ -7,17 +7,17 @@ interface Props {
 }
 
 const config: Record<MonitorStatus, { dot: string; pill: string; label: string; glow: string }> = {
-  UP:          { dot: 'bg-emerald-400', glow: 'glow-green', pill: 'bg-emerald-500/8 text-emerald-400 border border-emerald-500/20', label: 'Up' },
-  DOWN:        { dot: 'bg-red-400 animate-pulse', glow: 'glow-red', pill: 'bg-red-500/8 text-red-400 border border-red-500/20', label: 'Down' },
-  PENDING:     { dot: 'bg-yellow-400', glow: '', pill: 'bg-yellow-500/8 text-yellow-400 border border-yellow-500/20', label: 'Pending' },
-  MAINTENANCE: { dot: 'bg-blue-400', glow: '', pill: 'bg-blue-500/8 text-blue-400 border border-blue-500/20', label: 'Maint.' },
+  UP:          { dot: 'bg-emerald-400', glow: 'glow-green', pill: 'dark:bg-emerald-500/10 bg-emerald-50 dark:text-emerald-400 text-emerald-600 dark:border-emerald-500/20 border-emerald-200', label: 'Up' },
+  DOWN:        { dot: 'bg-red-400 animate-pulse', glow: 'glow-red', pill: 'dark:bg-red-500/10 bg-red-50 dark:text-red-400 text-red-600 dark:border-red-500/20 border-red-200', label: 'Down' },
+  PENDING:     { dot: 'bg-yellow-400', glow: '', pill: 'dark:bg-yellow-500/10 bg-yellow-50 dark:text-yellow-400 text-yellow-600 dark:border-yellow-500/20 border-yellow-200', label: 'Pending' },
+  MAINTENANCE: { dot: 'bg-blue-400', glow: '', pill: 'dark:bg-blue-500/10 bg-blue-50 dark:text-blue-400 text-blue-600 dark:border-blue-500/20 border-blue-200', label: 'Maint.' },
 }
 
 export default function StatusBadge({ status, size = 'md' }: Props) {
   const { dot, glow, pill, label } = config[status] ?? config.PENDING
   return (
     <span className={clsx(
-      'inline-flex items-center gap-1.5 font-mono font-medium rounded-md',
+      'inline-flex items-center gap-1.5 font-mono font-medium rounded-md border',
       pill,
       size === 'sm' ? 'text-[10px] px-1.5 py-0.5' : 'text-xs px-2 py-1',
     )}>
