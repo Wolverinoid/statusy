@@ -6,6 +6,7 @@ import (
 	"io/fs"
 	"log/slog"
 	"net/http"
+	"strings"
 
 	"github.com/go-chi/chi/v5"
 	"github.com/go-chi/chi/v5/middleware"
@@ -159,26 +160,49 @@ func spaHandler(fileServer http.Handler, distFS fs.FS) http.HandlerFunc {
 // and optional HTTP basic auth (stored in DB via integrations).
 func metricsHandler(cfg *config.Config, reg *metrics.Registry, db *gorm.DB) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
-		// Bearer token auth from config file (legacy)
+		// Bearer token auth from config file (legacy).
+		// Only enforced when the request uses Bearer scheme; Basic auth requests
+		// are allowed to fall through to the basic-auth check below.
 		if cfg.Metrics.BearerToken != "" {
-			token := r.Header.Get("Authorization")
-			if token != "Bearer "+cfg.Metrics.BearerToken {
-				http.Error(w, "unauthorized", http.StatusUnauthorized)
-				return
-			}
-		}
-
-		// Basic auth from DB integration settings
-		if db != nil {
-			promCfg, err := loadPrometheusIntegrationConfig(db)
-			if err == nil && promCfg != nil && (promCfg.BasicAuthUser != "" || promCfg.BasicAuthPass != "") {
-				user, pass, ok := r.BasicAuth()
-				if !ok || user != promCfg.BasicAuthUser || pass != promCfg.BasicAuthPass {
-					w.Header().Set("WWW-Authenticate", `Basic realm="Statusy Metrics"`)
+			authHeader := r.Header.Get("Authorization")
+			if strings.HasPrefix(authHeader, "Bearer ") {
+				if authHeader != "Bearer "+cfg.Metrics.BearerToken {
 					http.Error(w, "unauthorized", http.StatusUnauthorized)
 					return
 				}
+			} else if !strings.HasPrefix(authHeader, "Basic ") {
+				// No recognised auth scheme provided — reject
+				http.Error(w, "unauthorized", http.StatusUnauthorized)
+				return
 			}
+			// "Basic ..." header: fall through to basic-auth check below
+		}
+
+		// Basic auth from DB integration settings.
+		// Also gates the endpoint: if the integration record exists but is disabled, return 404.
+		if db != nil {
+			var integration models.Integration
+			err := db.Where("name = ?", "prometheus").First(&integration).Error
+			if err == nil {
+				// Record exists — check if disabled
+				if !integration.Enabled {
+					http.NotFound(w, r)
+					return
+				}
+				// Enabled — enforce basic auth if credentials are set
+				var promCfg PrometheusConfig
+				if jsonErr := json.Unmarshal([]byte(integration.Config), &promCfg); jsonErr == nil {
+					if promCfg.BasicAuthUser != "" || promCfg.BasicAuthPass != "" {
+						user, pass, ok := r.BasicAuth()
+						if !ok || user != promCfg.BasicAuthUser || pass != promCfg.BasicAuthPass {
+							w.Header().Set("WWW-Authenticate", `Basic realm="Statusy Metrics"`)
+							http.Error(w, "unauthorized", http.StatusUnauthorized)
+							return
+						}
+					}
+				}
+			}
+			// If no record exists at all — allow access (not configured yet)
 		}
 
 		reg.Handler().ServeHTTP(w, r)
