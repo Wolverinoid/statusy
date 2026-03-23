@@ -135,7 +135,7 @@ export default function StatusPageView() {
   if (isLoading) {
     return (
       <div className="min-h-screen bg-gray-950 flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-6 h-6 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
@@ -177,7 +177,7 @@ export default function StatusPageView() {
       <div className="border-b border-gray-800 bg-gray-900/50 backdrop-blur-sm sticky top-0 z-10">
         <div className="max-w-3xl mx-auto px-6 py-4 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="w-2 h-2 rounded-full bg-indigo-500 animate-pulse" />
+            <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse glow-cyan" />
             <span className="font-semibold text-gray-100">{page.Name}</span>
           </div>
           <span className="text-xs text-gray-500">Updated {lastUpdated}</span>

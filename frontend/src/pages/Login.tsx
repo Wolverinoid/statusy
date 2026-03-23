@@ -1,7 +1,7 @@
 import { useState, type FormEvent } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '@/contexts/AuthContext'
-import { Radio, Loader2 } from 'lucide-react'
+import { Radio, Loader2, AlertCircle } from 'lucide-react'
 
 export default function Login() {
   const { login } = useAuth()
@@ -26,30 +26,47 @@ export default function Login() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-950 flex items-center justify-center p-4">
-      {/* Background glows */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-indigo-600/8 rounded-full blur-3xl" />
-        <div className="absolute top-2/3 left-1/3 -translate-x-1/2 w-64 h-64 bg-violet-600/6 rounded-full blur-3xl" />
-      </div>
+    <div className="min-h-screen bg-gray-950 flex items-center justify-center p-4 relative overflow-hidden">
+      {/* Dot grid background */}
+      <div
+        className="absolute inset-0 opacity-100"
+        style={{
+          backgroundImage: 'radial-gradient(circle, rgba(6,182,212,0.07) 1px, transparent 1px)',
+          backgroundSize: '28px 28px',
+        }}
+      />
 
-      <div className="relative w-full max-w-sm">
+      {/* Ambient glows */}
+      <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[600px] h-[300px] bg-cyan-500/5 rounded-full blur-3xl pointer-events-none" />
+      <div className="absolute bottom-1/4 left-1/4 w-48 h-48 bg-cyan-600/8 rounded-full blur-3xl pointer-events-none" />
+
+      {/* Horizontal scan line effect */}
+      <div className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-cyan-500/30 to-transparent" />
+      <div className="absolute inset-x-0 bottom-0 h-px bg-gradient-to-r from-transparent via-cyan-500/20 to-transparent" />
+
+      <div className="relative w-full max-w-sm animate-fade-in">
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
-          <div className="w-14 h-14 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-2xl flex items-center justify-center mb-4 shadow-xl shadow-indigo-900/50">
-            <Radio className="w-7 h-7 text-white" />
+          <div className="relative mb-5">
+            <div className="absolute inset-0 bg-cyan-500/30 rounded-2xl blur-lg" />
+            <div className="relative w-16 h-16 bg-gray-900 border border-cyan-500/40 rounded-2xl flex items-center justify-center">
+              <Radio className="w-8 h-8 text-cyan-400" />
+            </div>
           </div>
           <h1 className="text-2xl font-bold text-white tracking-tight">Statusy</h1>
-          <p className="text-sm text-gray-500 mt-1">Sign in to your account</p>
+          <p className="text-xs text-gray-600 mt-1.5 font-mono uppercase tracking-widest">monitoring dashboard</p>
         </div>
 
         {/* Card */}
-        <div className="bg-gray-900/90 border border-gray-700/60 rounded-2xl p-6 shadow-2xl shadow-black/40 backdrop-blur-sm">
+        <div className="bg-gray-900/80 border border-gray-800/80 rounded-2xl p-6 shadow-2xl shadow-black/60 backdrop-blur-sm relative overflow-hidden">
+          {/* Top accent line */}
+          <div className="absolute top-0 left-6 right-6 h-px bg-gradient-to-r from-transparent via-cyan-500/40 to-transparent" />
+
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="label">Username</label>
               <input
-                className="input"
+                className="input font-mono"
                 type="text"
                 autoComplete="username"
                 autoFocus
@@ -62,7 +79,7 @@ export default function Login() {
             <div>
               <label className="label">Password</label>
               <input
-                className="input"
+                className="input font-mono"
                 type="password"
                 autoComplete="current-password"
                 value={password}
@@ -73,20 +90,26 @@ export default function Login() {
             </div>
 
             {error && (
-              <p className="text-sm text-red-400 bg-red-500/10 border border-red-500/20 rounded-lg px-3 py-2">
+              <div className="flex items-center gap-2 text-sm text-red-400 bg-red-500/8 border border-red-500/20 rounded-lg px-3 py-2.5">
+                <AlertCircle className="w-4 h-4 flex-shrink-0" />
                 {error}
-              </p>
+              </div>
             )}
 
             <button
               type="submit"
               disabled={loading}
-              className="btn-primary w-full justify-center py-2.5"
+              className="btn-primary w-full justify-center py-2.5 mt-2"
             >
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Sign in'}
             </button>
           </form>
         </div>
+
+        {/* Footer hint */}
+        <p className="text-center text-xs text-gray-700 mt-5 font-mono">
+          self-hosted · open source
+        </p>
       </div>
     </div>
   )

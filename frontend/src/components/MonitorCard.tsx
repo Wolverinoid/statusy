@@ -41,7 +41,7 @@ export default function MonitorCard({ monitor, onPause, onResume, onDelete }: Pr
   const tls = parseTlsExpiry(monitor)
 
   return (
-    <div className="card p-4 hover:border-gray-700/80 hover:bg-gray-900 transition-all duration-200 group">
+    <div className="card p-3.5 hover:border-gray-700/50 hover:bg-gray-900/80 transition-all duration-200 group border-l-2 border-l-transparent hover:border-l-cyan-500/20">
       {/* Single row: status | name+badges | bars | interval | actions */}
       <div className="flex items-center gap-3">
         {/* Status dot */}
@@ -53,17 +53,17 @@ export default function MonitorCard({ monitor, onPause, onResume, onDelete }: Pr
         <div className="flex items-center gap-2 min-w-0 flex-shrink-0 w-40 sm:w-52">
           <Link
             to={`/monitors/${monitor.ID}`}
-            className="font-medium text-gray-100 hover:text-indigo-400 transition-colors truncate"
+            className="font-medium text-gray-200 hover:text-cyan-400 transition-colors truncate"
             title={monitor.Name}
           >
             {monitor.Name}
           </Link>
-          <span className="text-xs text-gray-600 bg-gray-800 px-1.5 py-0.5 rounded flex-shrink-0 hidden sm:inline">
+          <span className="tag flex-shrink-0 hidden sm:inline">
             {typeLabel[monitor.Type] ?? monitor.Type}
           </span>
           {!monitor.Active && (
-            <span className="text-xs text-gray-500 bg-gray-800 px-1.5 py-0.5 rounded flex-shrink-0 hidden sm:inline">
-              Paused
+            <span className="tag text-yellow-600 border-yellow-800/40 flex-shrink-0 hidden sm:inline">
+              paused
             </span>
           )}
         </div>
@@ -118,8 +118,8 @@ export default function MonitorCard({ monitor, onPause, onResume, onDelete }: Pr
         )}
 
         {/* Interval */}
-        <span className="text-xs text-gray-600 flex-shrink-0 hidden md:block">
-          every {monitor.IntervalSeconds}s
+        <span className="text-[10px] text-gray-700 flex-shrink-0 hidden md:block font-mono">
+          /{monitor.IntervalSeconds}s
         </span>
 
         {/* Actions */}

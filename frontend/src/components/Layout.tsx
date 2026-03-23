@@ -11,6 +11,12 @@ const navItems = [
   { to: '/notifications', icon: Bell, label: 'Notifications' },
 ]
 
+const adminItems = [
+  { to: '/status-pages', icon: Globe, label: 'Status Pages' },
+  { to: '/users', icon: Users, label: 'Users' },
+  { to: '/integrations', icon: Plug, label: 'Integrations' },
+]
+
 export default function Layout() {
   const { user, logout } = useAuth()
   const navigate = useNavigate()
@@ -23,13 +29,25 @@ export default function Layout() {
   return (
     <div className="flex h-screen overflow-hidden bg-gray-950">
       {/* Sidebar */}
-      <aside className="w-60 flex-shrink-0 flex flex-col bg-gradient-to-b from-gray-900 to-gray-950 border-r border-gray-800/60">
+      <aside className="w-56 flex-shrink-0 flex flex-col border-r border-gray-800/50 bg-gray-950 relative">
+        {/* Subtle vertical glow line on right edge */}
+        <div className="absolute right-0 top-0 bottom-0 w-px bg-gradient-to-b from-transparent via-cyan-500/20 to-transparent pointer-events-none" />
+
         {/* Logo */}
-        <div className="flex items-center gap-2.5 px-5 py-5 border-b border-gray-800/60">
-          <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-900/50">
-            <Radio className="w-4 h-4 text-white" />
+        <div className="flex items-center gap-3 px-5 py-5 border-b border-gray-800/50">
+          <div className="relative w-8 h-8 flex items-center justify-center">
+            <div className="absolute inset-0 bg-cyan-500/20 rounded-lg blur-sm" />
+            <div className="relative w-8 h-8 bg-gray-900 border border-cyan-500/40 rounded-lg flex items-center justify-center">
+              <Radio className="w-4 h-4 text-cyan-400" />
+            </div>
           </div>
-          <span className="font-bold text-lg tracking-tight text-white">Statusy</span>
+          <div>
+            <span className="font-bold text-base tracking-tight text-white">Statusy</span>
+            <div className="flex items-center gap-1 mt-0.5">
+              <span className="w-1.5 h-1.5 rounded-full bg-cyan-400 animate-pulse" />
+              <span className="text-[10px] text-cyan-600 font-mono uppercase tracking-widest">live</span>
+            </div>
+          </div>
         </div>
 
         {/* Nav */}
@@ -40,17 +58,12 @@ export default function Layout() {
               to={to}
               end={end}
               className={({ isActive }) =>
-                clsx(
-                  'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150',
-                  isActive
-                    ? 'bg-indigo-500/15 text-indigo-300 border border-indigo-500/20'
-                    : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800/60 border border-transparent',
-                )
+                clsx(isActive ? 'nav-item-active' : 'nav-item-inactive')
               }
             >
               {({ isActive }) => (
                 <>
-                  <Icon className={clsx('w-4 h-4 flex-shrink-0', isActive ? 'text-indigo-400' : '')} />
+                  <Icon className={clsx('w-4 h-4 flex-shrink-0', isActive ? 'text-cyan-400' : 'text-gray-600')} />
                   {label}
                 </>
               )}
@@ -59,26 +72,20 @@ export default function Layout() {
 
           {user?.role === 'admin' && (
             <>
-              {[
-                { to: '/status-pages', icon: Globe, label: 'Status Pages' },
-                { to: '/users', icon: Users, label: 'Users' },
-                { to: '/integrations', icon: Plug, label: 'Integrations' },
-              ].map(({ to, icon: Icon, label }) => (
+              <div className="pt-3 pb-1 px-3">
+                <span className="text-[10px] font-mono text-gray-700 uppercase tracking-widest">Admin</span>
+              </div>
+              {adminItems.map(({ to, icon: Icon, label }) => (
                 <NavLink
                   key={to}
                   to={to}
                   className={({ isActive }) =>
-                    clsx(
-                      'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150',
-                      isActive
-                        ? 'bg-indigo-500/15 text-indigo-300 border border-indigo-500/20'
-                        : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800/60 border border-transparent',
-                    )
+                    clsx(isActive ? 'nav-item-active' : 'nav-item-inactive')
                   }
                 >
                   {({ isActive }) => (
                     <>
-                      <Icon className={clsx('w-4 h-4 flex-shrink-0', isActive ? 'text-indigo-400' : '')} />
+                      <Icon className={clsx('w-4 h-4 flex-shrink-0', isActive ? 'text-cyan-400' : 'text-gray-600')} />
                       {label}
                     </>
                   )}
@@ -89,19 +96,19 @@ export default function Layout() {
         </nav>
 
         {/* User footer */}
-        <div className="px-3 py-4 border-t border-gray-800/60">
-          <div className="flex items-center gap-3 px-3 py-2 mb-1">
-            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-indigo-500/40 to-violet-600/40 border border-indigo-500/30 flex items-center justify-center text-xs font-bold text-indigo-300 uppercase">
+        <div className="px-3 py-4 border-t border-gray-800/50">
+          <div className="flex items-center gap-2.5 px-2 py-2 mb-1 rounded-lg">
+            <div className="w-7 h-7 rounded-lg bg-gray-800 border border-gray-700/60 flex items-center justify-center text-xs font-bold text-cyan-400 font-mono uppercase flex-shrink-0">
               {user?.username?.[0] ?? '?'}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-200 truncate">{user?.username}</p>
-              <p className="text-xs text-gray-500 capitalize">{user?.role}</p>
+              <p className="text-sm font-medium text-gray-300 truncate">{user?.username}</p>
+              <p className="text-[10px] text-gray-600 font-mono uppercase tracking-wider">{user?.role}</p>
             </div>
           </div>
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-gray-500 hover:text-red-400 hover:bg-red-500/8 transition-all duration-150"
+            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-gray-600 hover:text-red-400 hover:bg-red-500/5 transition-all duration-150"
           >
             <LogOut className="w-4 h-4" />
             Sign out
@@ -110,7 +117,7 @@ export default function Layout() {
       </aside>
 
       {/* Main content */}
-      <main className="flex-1 overflow-y-auto">
+      <main className="flex-1 overflow-y-auto bg-gray-950">
         <Outlet />
       </main>
     </div>

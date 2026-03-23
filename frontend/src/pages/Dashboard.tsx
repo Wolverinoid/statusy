@@ -2,14 +2,32 @@ import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { monitorsApi } from '@/api/client'
 import StatusBadge from '@/components/StatusBadge'
-import { Activity, ArrowRight, XCircle } from 'lucide-react'
+import { Activity, ArrowRight, XCircle, TrendingUp } from 'lucide-react'
 import type { MonitorStatus } from '@/api/types'
 
-function StatCard({ label, value, color, accent }: { label: string; value: number; color: string; accent: string }) {
+interface StatCardProps {
+  label: string
+  value: number
+  color: string
+  borderColor: string
+  glowClass?: string
+  dotColor: string
+}
+
+function StatCard({ label, value, color, borderColor, glowClass, dotColor }: StatCardProps) {
   return (
-    <div className={`card p-5 relative overflow-hidden border-t-2 ${accent}`}>
-      <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">{label}</p>
-      <p className={`text-3xl font-bold ${color}`}>{value}</p>
+    <div className={`stat-card border-l-2 ${borderColor}`}>
+      {/* Corner decoration */}
+      <div className="absolute top-0 right-0 w-16 h-16 opacity-5">
+        <div className={`w-full h-full rounded-bl-full ${dotColor.replace('bg-', 'bg-')}`} />
+      </div>
+      <div className="flex items-start justify-between">
+        <div>
+          <p className="text-[10px] font-mono text-gray-600 uppercase tracking-widest mb-2">{label}</p>
+          <p className={`text-3xl font-bold font-mono tabular-nums ${color}`}>{value}</p>
+        </div>
+        <div className={`w-2 h-2 rounded-full mt-1 ${dotColor} ${glowClass ?? ''}`} />
+      </div>
     </div>
   )
 }
@@ -28,89 +46,105 @@ export default function Dashboard() {
 
   const downMonitors = monitors.filter((m) => m.Status === 'DOWN')
   const recentMonitors = [...monitors].slice(0, 8)
+  const uptimePct = monitors.length
+    ? Math.round((counts.UP / monitors.length) * 100)
+    : null
 
   if (isLoading) {
     return (
       <div className="flex items-center justify-center h-64">
-        <div className="w-6 h-6 border-2 border-indigo-500 border-t-transparent rounded-full animate-spin" />
+        <div className="w-5 h-5 border-2 border-cyan-500 border-t-transparent rounded-full animate-spin" />
       </div>
     )
   }
 
   return (
-    <div className="p-6 max-w-6xl mx-auto">
+    <div className="p-6 max-w-5xl mx-auto">
       {/* Header */}
-      <div className="mb-7">
-        <h1 className="text-2xl font-bold text-gray-100 tracking-tight">Dashboard</h1>
-        <p className="text-sm text-gray-500 mt-1">Overview of all your monitors</p>
+      <div className="mb-7 flex items-start justify-between">
+        <div>
+          <h1 className="text-xl font-bold text-gray-100 tracking-tight">Dashboard</h1>
+          <p className="text-xs text-gray-600 mt-1 font-mono">
+            {monitors.length} monitor{monitors.length !== 1 ? 's' : ''} tracked
+            {uptimePct !== null && (
+              <span className="ml-2 text-cyan-600">· {uptimePct}% up</span>
+            )}
+          </p>
+        </div>
+        {uptimePct !== null && (
+          <div className="flex items-center gap-1.5 text-xs text-gray-600">
+            <TrendingUp className="w-3.5 h-3.5 text-cyan-600" />
+            <span className="font-mono text-cyan-600 font-semibold">{uptimePct}%</span>
+            <span className="text-gray-700">overall uptime</span>
+          </div>
+        )}
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-7">
-        <StatCard label="Up" value={counts.UP} color="text-emerald-400" accent="border-emerald-500/60" />
-        <StatCard label="Down" value={counts.DOWN} color="text-red-400" accent="border-red-500/60" />
-        <StatCard label="Pending" value={counts.PENDING} color="text-yellow-400" accent="border-yellow-500/60" />
-        <StatCard label="Maintenance" value={counts.MAINTENANCE} color="text-blue-400" accent="border-blue-500/60" />
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-7">
+        <StatCard label="Operational" value={counts.UP} color="text-emerald-400" borderColor="border-l-emerald-500/50" dotColor="bg-emerald-400" glowClass="glow-green" />
+        <StatCard label="Down" value={counts.DOWN} color="text-red-400" borderColor="border-l-red-500/50" dotColor="bg-red-400" glowClass={counts.DOWN > 0 ? 'glow-red animate-pulse' : ''} />
+        <StatCard label="Pending" value={counts.PENDING} color="text-yellow-400" borderColor="border-l-yellow-500/50" dotColor="bg-yellow-400" />
+        <StatCard label="Maintenance" value={counts.MAINTENANCE} color="text-blue-400" borderColor="border-l-blue-500/50" dotColor="bg-blue-400" />
       </div>
 
-      {/* Incidents */}
+      {/* Active Incidents */}
       {downMonitors.length > 0 && (
         <div className="mb-7">
-          <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse inline-block" />
-            Active Incidents
-          </h2>
-          <div className="space-y-2">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="w-1.5 h-1.5 rounded-full bg-red-400 animate-pulse" />
+            <h2 className="section-header text-red-600">Active Incidents</h2>
+            <span className="tag text-red-500 border-red-800/40">{downMonitors.length}</span>
+          </div>
+          <div className="space-y-1.5">
             {downMonitors.map((m) => (
               <Link
                 key={m.ID}
                 to={`/monitors/${m.ID}`}
-                className="card p-4 flex items-center gap-3 hover:border-red-700/40 transition-all duration-200 border-red-900/40 bg-red-950/10"
+                className="card p-3.5 flex items-center gap-3 hover:border-red-800/40 transition-all duration-200 border-l-2 border-l-red-500/50 bg-red-950/10 group"
               >
                 <XCircle className="w-4 h-4 text-red-400 flex-shrink-0" />
-                <span className="font-medium text-gray-200 flex-1">{m.Name}</span>
-                <span className="text-xs text-gray-500 truncate max-w-xs hidden sm:block">{m.URL || m.Host || m.Domain}</span>
-                <ArrowRight className="w-3.5 h-3.5 text-gray-600 flex-shrink-0" />
+                <span className="font-medium text-gray-200 flex-1 text-sm">{m.Name}</span>
+                <span className="text-xs text-gray-600 truncate max-w-xs hidden sm:block font-mono">{m.URL || m.Host || m.Domain}</span>
+                <ArrowRight className="w-3.5 h-3.5 text-gray-700 group-hover:text-red-500 transition-colors flex-shrink-0" />
               </Link>
             ))}
           </div>
         </div>
       )}
 
-      {/* All monitors summary */}
+      {/* Monitor list */}
       <div>
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-widest">
-            Monitors
-          </h2>
-          <Link to="/monitors" className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1 transition-colors">
-            View all <ArrowRight className="w-3 h-3" />
+          <h2 className="section-header">Monitors</h2>
+          <Link to="/monitors" className="text-xs text-cyan-600 hover:text-cyan-400 flex items-center gap-1 transition-colors font-mono">
+            view all <ArrowRight className="w-3 h-3" />
           </Link>
         </div>
 
         {monitors.length === 0 ? (
           <div className="card p-12 flex flex-col items-center text-center">
-            <div className="w-16 h-16 rounded-2xl bg-gray-800/80 flex items-center justify-center mb-4">
-              <Activity className="w-8 h-8 text-gray-600" />
+            <div className="w-14 h-14 rounded-xl bg-gray-800/60 border border-gray-700/40 flex items-center justify-center mb-4">
+              <Activity className="w-7 h-7 text-gray-700" />
             </div>
-            <p className="text-gray-300 font-semibold">No monitors yet</p>
-            <p className="text-sm text-gray-600 mt-1 mb-5">Add your first monitor to start tracking uptime</p>
+            <p className="text-gray-400 font-medium text-sm">No monitors yet</p>
+            <p className="text-xs text-gray-700 mt-1 mb-5 font-mono">Add your first monitor to start tracking uptime</p>
             <Link to="/monitors" className="btn-primary">Add monitor</Link>
           </div>
         ) : (
-          <div className="space-y-2">
+          <div className="space-y-1.5">
             {recentMonitors.map((m) => (
               <Link
                 key={m.ID}
                 to={`/monitors/${m.ID}`}
-                className="card p-4 flex items-center gap-4 hover:border-gray-700/80 hover:bg-gray-900 transition-all duration-200"
+                className="card p-3.5 flex items-center gap-3 hover:border-gray-700/60 hover:bg-gray-900/80 transition-all duration-200 group"
               >
                 <StatusBadge status={m.Status} size="sm" />
-                <span className="flex-1 font-medium text-gray-200 truncate">{m.Name}</span>
-                <span className="text-xs text-gray-600 hidden sm:block truncate max-w-xs">
+                <span className="flex-1 font-medium text-gray-300 truncate text-sm group-hover:text-gray-100 transition-colors">{m.Name}</span>
+                <span className="text-xs text-gray-700 hidden sm:block truncate max-w-xs font-mono">
                   {m.URL || m.Host || m.Domain || '—'}
                 </span>
-                <ArrowRight className="w-3.5 h-3.5 text-gray-700 flex-shrink-0" />
+                <ArrowRight className="w-3.5 h-3.5 text-gray-700 group-hover:text-gray-500 transition-colors flex-shrink-0" />
               </Link>
             ))}
           </div>
