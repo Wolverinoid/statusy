@@ -45,6 +45,15 @@ func (h *Handler) Create(w http.ResponseWriter, r *http.Request) {
 		writeError(w, http.StatusInternalServerError, "failed to create monitor")
 		return
 	}
+
+	// Auto-attach all existing notification channels to the new monitor
+	var allNotifs []models.Notification
+	if err := h.db.Find(&allNotifs).Error; err == nil && len(allNotifs) > 0 {
+		h.db.Model(&m).Association("Notifications").Replace(allNotifs) //nolint:errcheck
+	}
+
+	// Reload with notifications for the response
+	h.db.Preload("Notifications").First(&m, m.ID) //nolint:errcheck
 	writeJSON(w, http.StatusCreated, m)
 }
 

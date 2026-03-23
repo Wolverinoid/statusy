@@ -83,7 +83,8 @@ type Monitor struct {
 	Method     string // GET | POST | HEAD
 	Headers    string // JSON map[string]string
 	Body       string
-	ExpectedStatus int
+	ExpectedStatus  int
+	AcceptedStatuses string // comma-separated list, e.g. "200,202,204"; overrides ExpectedStatus when set
 
 	// Keyword
 	Keyword   string

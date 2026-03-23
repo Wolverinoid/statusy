@@ -86,10 +86,24 @@ function MonitorForm({
               {['GET', 'POST', 'HEAD', 'PUT', 'DELETE'].map((m) => <option key={m}>{m}</option>)}
             </select>
           </div>
-          <div>
-            <label className="label">Expected Status</label>
-            <input className="input" type="number" value={form.ExpectedStatus ?? 200} onChange={(e) => set('ExpectedStatus', +e.target.value)} />
-          </div>
+          {form.Type === 'http' && (
+            <div>
+              <label className="label">Accepted Statuses</label>
+              <input
+                className="input"
+                value={form.AcceptedStatuses ?? ''}
+                onChange={(e) => set('AcceptedStatuses', e.target.value)}
+                placeholder="200,202,204"
+              />
+              <p className="text-xs text-gray-500 mt-1">Comma-separated. Leave empty to accept 200 only.</p>
+            </div>
+          )}
+          {form.Type === 'response_time' && (
+            <div>
+              <label className="label">Expected Status</label>
+              <input className="input" type="number" value={form.ExpectedStatus ?? 200} onChange={(e) => set('ExpectedStatus', +e.target.value)} />
+            </div>
+          )}
         </div>
       )}
 

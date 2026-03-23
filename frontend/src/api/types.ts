@@ -51,6 +51,7 @@ export interface Monitor {
   Headers: string
   Body: string
   ExpectedStatus: number
+  AcceptedStatuses: string
   Keyword: string
   KeywordMode: string
   JSONPath: string
@@ -76,6 +77,7 @@ export interface MonitorFormData {
   URL?: string
   Method?: string
   ExpectedStatus?: number
+  AcceptedStatuses?: string
   Keyword?: string
   KeywordMode?: string
   JSONPath?: string

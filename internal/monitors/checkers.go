@@ -9,6 +9,7 @@ import (
 	"net"
 	"net/http"
 	"net/url"
+	"strconv"
 	"strings"
 	"time"
 
@@ -100,13 +101,11 @@ func checkHTTP(ctx context.Context, m *models.Monitor) (models.MonitorStatus, st
 	}
 	defer resp.Body.Close()
 
-	expected := m.ExpectedStatus
-	if expected == 0 {
-		expected = http.StatusOK
-	}
-
-	if resp.StatusCode != expected {
-		return models.StatusDown, fmt.Sprintf("expected status %d, got %d", expected, resp.StatusCode)
+	// Build the set of accepted status codes.
+	// AcceptedStatuses (comma-separated) takes priority; falls back to ExpectedStatus (default 200).
+	accepted := parseAcceptedStatuses(m.AcceptedStatuses, m.ExpectedStatus)
+	if !accepted[resp.StatusCode] {
+		return models.StatusDown, fmt.Sprintf("unexpected status %d (accepted: %s)", resp.StatusCode, acceptedString(accepted))
 	}
 
 	// TLS certificate check — automatic for all HTTPS monitors
@@ -126,6 +125,47 @@ func checkHTTP(ctx context.Context, m *models.Monitor) (models.MonitorStatus, st
 	}
 
 	return models.StatusUp, fmt.Sprintf("HTTP %d", resp.StatusCode)
+}
+
+// parseAcceptedStatuses builds a set of accepted HTTP status codes.
+// If raw is non-empty (e.g. "200,202,204"), it is parsed; otherwise fallback is used (default 200).
+func parseAcceptedStatuses(raw string, fallback int) map[int]bool {
+	set := make(map[int]bool)
+	raw = strings.TrimSpace(raw)
+	if raw != "" {
+		for _, part := range strings.Split(raw, ",") {
+			part = strings.TrimSpace(part)
+			if code, err := strconv.Atoi(part); err == nil && code > 0 {
+				set[code] = true
+			}
+		}
+	}
+	if len(set) == 0 {
+		if fallback == 0 {
+			fallback = http.StatusOK
+		}
+		set[fallback] = true
+	}
+	return set
+}
+
+// acceptedString returns a human-readable sorted list of accepted status codes.
+func acceptedString(accepted map[int]bool) string {
+	codes := make([]int, 0, len(accepted))
+	for c := range accepted {
+		codes = append(codes, c)
+	}
+	// simple insertion sort (small slice)
+	for i := 1; i < len(codes); i++ {
+		for j := i; j > 0 && codes[j] < codes[j-1]; j-- {
+			codes[j], codes[j-1] = codes[j-1], codes[j]
+		}
+	}
+	parts := make([]string, len(codes))
+	for i, c := range codes {
+		parts[i] = strconv.Itoa(c)
+	}
+	return strings.Join(parts, ",")
 }
 
 // ─── Port ─────────────────────────────────────────────────────────────────────
