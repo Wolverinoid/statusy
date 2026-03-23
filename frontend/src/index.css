@@ -8,38 +8,58 @@
   }
   body {
     @apply bg-gray-950 text-gray-100;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
   }
   ::-webkit-scrollbar {
     @apply w-1.5;
   }
   ::-webkit-scrollbar-track {
-    @apply bg-gray-900;
+    @apply bg-gray-950;
   }
   ::-webkit-scrollbar-thumb {
-    @apply bg-gray-700 rounded-full;
+    @apply bg-gray-700/80 rounded-full;
+  }
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-600;
   }
 }
 
 @layer components {
   .btn {
-    @apply inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply inline-flex items-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-all duration-150 disabled:opacity-50 disabled:cursor-not-allowed focus:outline-none focus-visible:ring-2 focus-visible:ring-indigo-500/70;
   }
   .btn-primary {
-    @apply btn bg-indigo-600 hover:bg-indigo-500 text-white;
+    @apply btn bg-gradient-to-b from-indigo-500 to-indigo-600 hover:from-indigo-400 hover:to-indigo-500 text-white shadow-md shadow-indigo-900/40 active:scale-[0.98];
   }
   .btn-secondary {
-    @apply btn bg-gray-800 hover:bg-gray-700 text-gray-200;
+    @apply btn bg-gray-800 hover:bg-gray-700/70 text-gray-200 border border-gray-700/60 hover:border-gray-600 active:scale-[0.98];
   }
   .btn-danger {
-    @apply btn bg-red-600/20 hover:bg-red-600/30 text-red-400 border border-red-600/30;
+    @apply btn bg-red-600/15 hover:bg-red-600/25 text-red-400 border border-red-600/30 hover:border-red-500/50 active:scale-[0.98];
   }
   .card {
-    @apply bg-gray-900 border border-gray-800 rounded-xl;
+    @apply bg-gray-900/80 border border-gray-800/80 rounded-xl backdrop-blur-sm;
+  }
+  .card-hover {
+    @apply card hover:border-gray-700/80 hover:bg-gray-900 transition-all duration-200;
   }
   .input {
-    @apply w-full bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent transition-all;
+    @apply w-full bg-gray-800/80 border border-gray-700/80 rounded-lg px-3 py-2 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-indigo-500/60 focus:border-indigo-500/40 transition-all duration-150;
   }
   .label {
-    @apply block text-sm font-medium text-gray-400 mb-1;
+    @apply block text-sm font-medium text-gray-400 mb-1.5;
+  }
+  /* Subtle glow for status indicators */
+  .glow-green {
+    box-shadow: 0 0 8px 1px rgba(52, 211, 153, 0.35);
+  }
+  .glow-red {
+    box-shadow: 0 0 8px 1px rgba(248, 113, 113, 0.35);
+  }
+  .glow-yellow {
+    box-shadow: 0 0 8px 1px rgba(251, 191, 36, 0.35);
+  }
+  .glow-blue {
+    box-shadow: 0 0 8px 1px rgba(96, 165, 250, 0.35);
   }
 }

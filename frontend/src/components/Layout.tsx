@@ -23,10 +23,10 @@ export default function Layout() {
   return (
     <div className="flex h-screen overflow-hidden bg-gray-950">
       {/* Sidebar */}
-      <aside className="w-60 flex-shrink-0 flex flex-col bg-gray-900 border-r border-gray-800">
+      <aside className="w-60 flex-shrink-0 flex flex-col bg-gradient-to-b from-gray-900 to-gray-950 border-r border-gray-800/60">
         {/* Logo */}
-        <div className="flex items-center gap-2.5 px-5 py-5 border-b border-gray-800">
-          <div className="w-8 h-8 bg-indigo-600 rounded-lg flex items-center justify-center">
+        <div className="flex items-center gap-2.5 px-5 py-5 border-b border-gray-800/60">
+          <div className="w-8 h-8 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-lg flex items-center justify-center shadow-lg shadow-indigo-900/50">
             <Radio className="w-4 h-4 text-white" />
           </div>
           <span className="font-bold text-lg tracking-tight text-white">Statusy</span>
@@ -41,70 +41,57 @@ export default function Layout() {
               end={end}
               className={({ isActive }) =>
                 clsx(
-                  'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
+                  'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150',
                   isActive
-                    ? 'bg-indigo-600/20 text-indigo-400'
-                    : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800',
+                    ? 'bg-indigo-500/15 text-indigo-300 border border-indigo-500/20'
+                    : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800/60 border border-transparent',
                 )
               }
             >
-              <Icon className="w-4 h-4 flex-shrink-0" />
-              {label}
+              {({ isActive }) => (
+                <>
+                  <Icon className={clsx('w-4 h-4 flex-shrink-0', isActive ? 'text-indigo-400' : '')} />
+                  {label}
+                </>
+              )}
             </NavLink>
           ))}
 
           {user?.role === 'admin' && (
             <>
-              <NavLink
-                to="/status-pages"
-                className={({ isActive }) =>
-                  clsx(
-                    'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
-                    isActive
-                      ? 'bg-indigo-600/20 text-indigo-400'
-                      : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800',
-                  )
-                }
-              >
-                <Globe className="w-4 h-4 flex-shrink-0" />
-                Status Pages
-              </NavLink>
-              <NavLink
-                to="/users"
-                className={({ isActive }) =>
-                  clsx(
-                    'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
-                    isActive
-                      ? 'bg-indigo-600/20 text-indigo-400'
-                      : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800',
-                  )
-                }
-              >
-                <Users className="w-4 h-4 flex-shrink-0" />
-                Users
-              </NavLink>
-              <NavLink
-                to="/integrations"
-                className={({ isActive }) =>
-                  clsx(
-                    'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors',
-                    isActive
-                      ? 'bg-indigo-600/20 text-indigo-400'
-                      : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800',
-                  )
-                }
-              >
-                <Plug className="w-4 h-4 flex-shrink-0" />
-                Integrations
-              </NavLink>
+              {[
+                { to: '/status-pages', icon: Globe, label: 'Status Pages' },
+                { to: '/users', icon: Users, label: 'Users' },
+                { to: '/integrations', icon: Plug, label: 'Integrations' },
+              ].map(({ to, icon: Icon, label }) => (
+                <NavLink
+                  key={to}
+                  to={to}
+                  className={({ isActive }) =>
+                    clsx(
+                      'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-all duration-150',
+                      isActive
+                        ? 'bg-indigo-500/15 text-indigo-300 border border-indigo-500/20'
+                        : 'text-gray-400 hover:text-gray-200 hover:bg-gray-800/60 border border-transparent',
+                    )
+                  }
+                >
+                  {({ isActive }) => (
+                    <>
+                      <Icon className={clsx('w-4 h-4 flex-shrink-0', isActive ? 'text-indigo-400' : '')} />
+                      {label}
+                    </>
+                  )}
+                </NavLink>
+              ))}
             </>
           )}
         </nav>
 
         {/* User footer */}
-        <div className="px-3 py-4 border-t border-gray-800">
+        <div className="px-3 py-4 border-t border-gray-800/60">
           <div className="flex items-center gap-3 px-3 py-2 mb-1">
-            <div className="w-7 h-7 rounded-full bg-indigo-600/30 flex items-center justify-center text-xs font-bold text-indigo-400 uppercase">
+            <div className="w-7 h-7 rounded-full bg-gradient-to-br from-indigo-500/40 to-violet-600/40 border border-indigo-500/30 flex items-center justify-center text-xs font-bold text-indigo-300 uppercase">
               {user?.username?.[0] ?? '?'}
             </div>
             <div className="flex-1 min-w-0">
@@ -114,7 +101,7 @@ export default function Layout() {
           </div>
           <button
             onClick={handleLogout}
-            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-gray-400 hover:text-red-400 hover:bg-red-500/10 transition-colors"
+            className="w-full flex items-center gap-3 px-3 py-2 rounded-lg text-sm text-gray-500 hover:text-red-400 hover:bg-red-500/8 transition-all duration-150"
           >
             <LogOut className="w-4 h-4" />
             Sign out

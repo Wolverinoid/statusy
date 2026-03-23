@@ -41,7 +41,7 @@ export default function MonitorCard({ monitor, onPause, onResume, onDelete }: Pr
   const tls = parseTlsExpiry(monitor)
 
   return (
-    <div className="card p-4 hover:border-gray-700 transition-colors group">
+    <div className="card p-4 hover:border-gray-700/80 hover:bg-gray-900 transition-all duration-200 group">
       {/* Single row: status | name+badges | bars | interval | actions */}
       <div className="flex items-center gap-3">
         {/* Status dot */}

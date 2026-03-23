@@ -21,16 +21,16 @@ export default function Modal({ title, onClose, children, size = 'md' }: Props) 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Backdrop */}
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="absolute inset-0 bg-black/70 backdrop-blur-md" onClick={onClose} />
 
       {/* Panel */}
-      <div className={`relative w-full ${widths[size]} bg-gray-900 border border-gray-800 rounded-2xl shadow-2xl`}>
+      <div className={`relative w-full ${widths[size]} bg-gray-900 border border-gray-700/60 rounded-2xl shadow-2xl shadow-black/60`}>
         {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-800">
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-800/80 bg-gray-800/30 rounded-t-2xl">
           <h2 className="text-base font-semibold text-gray-100">{title}</h2>
           <button
             onClick={onClose}
-            className="p-1.5 rounded-lg text-gray-500 hover:text-gray-300 hover:bg-gray-800 transition-colors"
+            className="p-1.5 rounded-lg text-gray-500 hover:text-gray-200 hover:bg-gray-700/60 transition-all duration-150"
           >
             <X className="w-4 h-4" />
           </button>

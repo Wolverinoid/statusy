@@ -27,23 +27,24 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-gray-950 flex items-center justify-center p-4">
-      {/* Background glow */}
+      {/* Background glows */}
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-indigo-600/10 rounded-full blur-3xl" />
+        <div className="absolute top-1/3 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[500px] h-[500px] bg-indigo-600/8 rounded-full blur-3xl" />
+        <div className="absolute top-2/3 left-1/3 -translate-x-1/2 w-64 h-64 bg-violet-600/6 rounded-full blur-3xl" />
       </div>
 
       <div className="relative w-full max-w-sm">
         {/* Logo */}
         <div className="flex flex-col items-center mb-8">
-          <div className="w-12 h-12 bg-indigo-600 rounded-2xl flex items-center justify-center mb-4 shadow-lg shadow-indigo-600/30">
-            <Radio className="w-6 h-6 text-white" />
+          <div className="w-14 h-14 bg-gradient-to-br from-indigo-500 to-violet-600 rounded-2xl flex items-center justify-center mb-4 shadow-xl shadow-indigo-900/50">
+            <Radio className="w-7 h-7 text-white" />
           </div>
-          <h1 className="text-2xl font-bold text-white">Statusy</h1>
+          <h1 className="text-2xl font-bold text-white tracking-tight">Statusy</h1>
           <p className="text-sm text-gray-500 mt-1">Sign in to your account</p>
         </div>
 
         {/* Card */}
-        <div className="card p-6">
+        <div className="bg-gray-900/90 border border-gray-700/60 rounded-2xl p-6 shadow-2xl shadow-black/40 backdrop-blur-sm">
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
               <label className="label">Username</label>

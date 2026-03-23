@@ -93,8 +93,8 @@ export default function MonitorDetail() {
       {/* Header */}
       <div className="flex items-start justify-between mb-6">
         <div>
-          <div className="flex items-center gap-3 mb-1">
-            <h1 className="text-xl font-bold text-gray-100">{monitor.Name}</h1>
+          <div className="flex items-center gap-3 mb-1.5">
+            <h1 className="text-2xl font-bold text-gray-100 tracking-tight">{monitor.Name}</h1>
             <StatusBadge status={monitor.Status} />
           </div>
           <p className="text-sm text-gray-500">{monitor.URL || monitor.Host || monitor.Domain || monitor.DNSHost}</p>
@@ -103,16 +103,16 @@ export default function MonitorDetail() {
 
       {/* Stats row */}
       <div className="grid grid-cols-3 gap-4 mb-6">
-        <div className="card p-4">
-          <p className="text-xs text-gray-500 mb-1">Uptime (last 100)</p>
+        <div className="card p-4 border-t-2 border-emerald-500/50">
+          <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Uptime (last 100)</p>
           <p className="text-2xl font-bold text-emerald-400">{uptime !== null ? `${uptime}%` : '—'}</p>
         </div>
-        <div className="card p-4">
-          <p className="text-xs text-gray-500 mb-1">Avg Response</p>
+        <div className="card p-4 border-t-2 border-indigo-500/50">
+          <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Avg Response</p>
           <p className="text-2xl font-bold text-indigo-400">{avgMs !== null ? `${avgMs}ms` : '—'}</p>
         </div>
-        <div className="card p-4">
-          <p className="text-xs text-gray-500 mb-1">Check Interval</p>
+        <div className="card p-4 border-t-2 border-gray-600/50">
+          <p className="text-xs font-medium text-gray-500 uppercase tracking-wider mb-2">Check Interval</p>
           <p className="text-2xl font-bold text-gray-300">{monitor.IntervalSeconds}s</p>
         </div>
       </div>
@@ -120,7 +120,7 @@ export default function MonitorDetail() {
       {/* Response time chart */}
       {chartData.length > 0 && (
         <div className="card p-5 mb-6">
-          <h2 className="text-sm font-semibold text-gray-400 mb-4">Response Time</h2>
+          <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-4">Response Time</h2>
           <ResponsiveContainer width="100%" height={180}>
             <LineChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
@@ -139,8 +139,8 @@ export default function MonitorDetail() {
 
       {/* Notification channels */}
       <div className="card p-5 mb-6">
-        <h2 className="text-sm font-semibold text-gray-400 mb-3 flex items-center gap-2">
-          <Bell className="w-4 h-4" /> Notification Channels
+        <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-3 flex items-center gap-2">
+          <Bell className="w-3.5 h-3.5" /> Notification Channels
         </h2>
         {allNotifs.length === 0 ? (
           <p className="text-sm text-gray-600">No channels configured. <a href="/notifications" className="text-indigo-400 hover:underline">Add one</a>.</p>
@@ -170,8 +170,8 @@ export default function MonitorDetail() {
 
       {/* History table */}
       <div className="card overflow-hidden">
-        <div className="px-5 py-4 border-b border-gray-800">
-          <h2 className="text-sm font-semibold text-gray-400">Check History</h2>
+        <div className="px-5 py-4 border-b border-gray-800/80">
+          <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-widest">Check History</h2>
         </div>
         {history.length === 0 ? (
           <div className="p-8 text-center text-gray-600 text-sm">No checks yet</div>
