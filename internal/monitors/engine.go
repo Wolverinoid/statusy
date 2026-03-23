@@ -182,10 +182,13 @@ func (e *Engine) runCheck(ctx context.Context, m *models.Monitor) {
 
 	// Detect status change
 	previousStatus := m.Status
+	// newConsecutiveFailures is the updated count after this check
+	newConsecutiveFailures := consecutiveFailures(status, m.ConsecutiveFailures)
+
 	if status != previousStatus {
 		e.db.Model(m).Updates(map[string]interface{}{
 			"status":               status,
-			"consecutive_failures": consecutiveFailures(status, m.ConsecutiveFailures),
+			"consecutive_failures": newConsecutiveFailures,
 		})
 
 		// Load notification channels for this monitor
@@ -197,7 +200,8 @@ func (e *Engine) runCheck(ctx context.Context, m *models.Monitor) {
 				continue
 			}
 			// Respect noise-reduction: only alert after N consecutive failures
-			if status == models.StatusDown && m.ConsecutiveFailures < n.NotifyAfterFail {
+			// Use newConsecutiveFailures (already incremented) for the comparison
+			if status == models.StatusDown && newConsecutiveFailures < n.NotifyAfterFail {
 				continue
 			}
 			if status == models.StatusDown && !n.NotifyOnDown {
@@ -216,7 +220,7 @@ func (e *Engine) runCheck(ctx context.Context, m *models.Monitor) {
 			})
 		}
 	} else if status == models.StatusDown {
-		// Increment consecutive failures counter
+		// Increment consecutive failures counter (no status change, just keep counting)
 		e.db.Model(m).UpdateColumn("consecutive_failures", gorm.Expr("consecutive_failures + 1"))
 	}
 

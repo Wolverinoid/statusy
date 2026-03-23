@@ -1,8 +1,8 @@
 import { useParams, useNavigate } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
-import { monitorsApi } from '@/api/client'
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
+import { monitorsApi, notificationsApi } from '@/api/client'
 import StatusBadge from '@/components/StatusBadge'
-import { ArrowLeft, AlertCircle } from 'lucide-react'
+import { ArrowLeft, AlertCircle, Bell, BellOff } from 'lucide-react'
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from 'recharts'
 
 function formatDate(iso: string) {
@@ -13,6 +13,7 @@ export default function MonitorDetail() {
   const { id } = useParams<{ id: string }>()
   const navigate = useNavigate()
   const monitorId = Number(id)
+  const qc = useQueryClient()
 
   const { data: monitor, isLoading: loadingMonitor } = useQuery({
     queryKey: ['monitor', monitorId],
@@ -25,6 +26,25 @@ export default function MonitorDetail() {
     queryFn: () => monitorsApi.history(monitorId),
     refetchInterval: 30_000,
   })
+
+  const { data: allNotifs = [] } = useQuery({
+    queryKey: ['notifications'],
+    queryFn: notificationsApi.list,
+  })
+
+  const setNotifsMut = useMutation({
+    mutationFn: (ids: number[]) => monitorsApi.setNotifications(monitorId, ids),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ['monitor', monitorId] }),
+  })
+
+  const linkedIds = new Set((monitor?.Notifications ?? []).map((n) => n.ID))
+
+  const toggleNotif = (notifId: number) => {
+    const next = new Set(linkedIds)
+    if (next.has(notifId)) next.delete(notifId)
+    else next.add(notifId)
+    setNotifsMut.mutate([...next])
+  }
 
   if (loadingMonitor) {
     return (
@@ -116,6 +136,37 @@ export default function MonitorDetail() {
           </ResponsiveContainer>
         </div>
       )}
+
+      {/* Notification channels */}
+      <div className="card p-5 mb-6">
+        <h2 className="text-sm font-semibold text-gray-400 mb-3 flex items-center gap-2">
+          <Bell className="w-4 h-4" /> Notification Channels
+        </h2>
+        {allNotifs.length === 0 ? (
+          <p className="text-sm text-gray-600">No channels configured. <a href="/notifications" className="text-indigo-400 hover:underline">Add one</a>.</p>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {allNotifs.map((n) => {
+              const active = linkedIds.has(n.ID)
+              return (
+                <button
+                  key={n.ID}
+                  onClick={() => toggleNotif(n.ID)}
+                  disabled={setNotifsMut.isPending}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
+                    active
+                      ? 'bg-indigo-600/20 border-indigo-500/50 text-indigo-300'
+                      : 'bg-gray-800 border-gray-700 text-gray-500 hover:text-gray-300'
+                  }`}
+                >
+                  {active ? <Bell className="w-3 h-3" /> : <BellOff className="w-3 h-3" />}
+                  {n.Name}
+                </button>
+              )
+            })}
+          </div>
+        )}
+      </div>
 
       {/* History table */}
       <div className="card overflow-hidden">

@@ -77,6 +77,9 @@ export const monitorsApi = {
 
   history: (id: number) =>
     api.get<CheckResult[]>(`/monitors/${id}/history`).then((r) => r.data),
+
+  setNotifications: (id: number, notificationIds: number[]) =>
+    api.put(`/monitors/${id}/notifications`, { notification_ids: notificationIds }).then((r) => r.data),
 }
 
 // ── Notifications ─────────────────────────────────────────────────────────────

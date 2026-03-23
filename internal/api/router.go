@@ -67,6 +67,7 @@ func NewRouter(
 			r.Post("/{id}/pause", monitorHandler.Pause)
 			r.Post("/{id}/resume", monitorHandler.Resume)
 			r.Get("/{id}/history", monitorHandler.History)
+			r.Put("/{id}/notifications", monitorHandler.SetMonitorNotifications)
 		})
 
 		// Notifications (admin only)

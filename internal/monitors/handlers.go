@@ -178,6 +178,41 @@ func (h *Handler) DeleteNotification(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, http.StatusOK, map[string]string{"message": "deleted"})
 }
 
+// PUT /api/monitors/{id}/notifications — replace the notification channels linked to a monitor
+func (h *Handler) SetMonitorNotifications(w http.ResponseWriter, r *http.Request) {
+	id, _ := strconv.Atoi(chi.URLParam(r, "id"))
+	var body struct {
+		NotificationIDs []uint `json:"notification_ids"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+		writeError(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+
+	var monitor models.Monitor
+	if err := h.db.First(&monitor, id).Error; err != nil {
+		writeError(w, http.StatusNotFound, "monitor not found")
+		return
+	}
+
+	// Build the list of notification objects to associate
+	var notifs []models.Notification
+	if len(body.NotificationIDs) > 0 {
+		if err := h.db.Find(&notifs, body.NotificationIDs).Error; err != nil {
+			writeError(w, http.StatusInternalServerError, "failed to load notifications")
+			return
+		}
+	}
+
+	// Replace association (clears existing, sets new)
+	if err := h.db.Model(&monitor).Association("Notifications").Replace(notifs); err != nil {
+		writeError(w, http.StatusInternalServerError, "failed to update associations")
+		return
+	}
+
+	writeJSON(w, http.StatusOK, map[string]string{"message": "updated"})
+}
+
 // POST /api/notifications/{id}/test — sends a test alert
 func (h *Handler) TestNotification(w http.ResponseWriter, r *http.Request) {
 	id, _ := strconv.Atoi(chi.URLParam(r, "id"))

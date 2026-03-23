@@ -64,6 +64,7 @@ export interface Monitor {
   WarnDaysExpiry: number
   MaxResponseTimeMs: number
   LastMessage: string
+  Notifications: Notification[]
 }
 
 export interface MonitorFormData {
