@@ -255,9 +255,26 @@ func checkJSONAPI(ctx context.Context, m *models.Monitor) (models.MonitorStatus,
 	}
 	defer resp.Body.Close()
 
+	bodyBytes, err := io.ReadAll(io.LimitReader(resp.Body, 1<<20)) // 1MB limit
+	if err != nil {
+		return models.StatusDown, fmt.Sprintf("failed to read response body: %v", err)
+	}
+
+	logFailure := func(msg string) (models.MonitorStatus, string) {
+		fmt.Printf("[json_api] monitor=%q url=%q status=%d body=%s reason=%s\n",
+			m.Name, m.URL, resp.StatusCode, string(bodyBytes), msg)
+		return models.StatusDown, msg
+	}
+
+	// Validate HTTP status code (same logic as HTTP monitor)
+	accepted := parseAcceptedStatuses(m.AcceptedStatuses, m.ExpectedStatus)
+	if !accepted[resp.StatusCode] {
+		return logFailure(fmt.Sprintf("unexpected status %d (accepted: %s)", resp.StatusCode, acceptedString(accepted)))
+	}
+
 	var data interface{}
-	if err := json.NewDecoder(resp.Body).Decode(&data); err != nil {
-		return models.StatusDown, fmt.Sprintf("invalid JSON response: %v", err)
+	if err := json.Unmarshal(bodyBytes, &data); err != nil {
+		return logFailure(fmt.Sprintf("invalid JSON response (HTTP %d): %v", resp.StatusCode, err))
 	}
 
 	if m.JSONPath == "" {
@@ -267,13 +284,13 @@ func checkJSONAPI(ctx context.Context, m *models.Monitor) (models.MonitorStatus,
 	// Simple dot-notation path traversal (e.g. "status.code")
 	value, err := jsonPathGet(data, m.JSONPath)
 	if err != nil {
-		return models.StatusDown, fmt.Sprintf("JSON path %q not found: %v", m.JSONPath, err)
+		return logFailure(fmt.Sprintf("JSON path %q not found: %v", m.JSONPath, err))
 	}
 
 	if m.JSONExpected != "" {
 		actual := fmt.Sprintf("%v", value)
 		if actual != m.JSONExpected {
-			return models.StatusDown, fmt.Sprintf("JSON path %q = %q, expected %q", m.JSONPath, actual, m.JSONExpected)
+			return logFailure(fmt.Sprintf("JSON path %q = %q, expected %q", m.JSONPath, actual, m.JSONExpected))
 		}
 	}
 
