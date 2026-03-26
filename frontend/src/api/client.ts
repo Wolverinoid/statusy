@@ -15,6 +15,13 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 })
 
+// Public API instance — no auth interceptors, used for public status pages.
+// Must NOT redirect to /login on 401 (private page = show error in UI, not redirect).
+const publicApi = axios.create({
+  baseURL: '/api',
+  headers: { 'Content-Type': 'application/json' },
+})
+
 // Attach JWT from localStorage on every request.
 // Use X-Auth-Token instead of Authorization: Bearer to avoid
 // browser Basic Auth header collision when behind a reverse proxy.
@@ -144,7 +151,7 @@ export const statusPagesApi = {
     api.put(`/status-pages/${id}/users`, { user_ids: userIds }).then((r) => r.data),
 
   getPublic: (slug: string) =>
-    api.get<StatusPage>(`/status/${slug}`).then((r) => r.data),
+    publicApi.get<StatusPage>(`/status/${slug}`).then((r) => r.data),
 }
 
 // ── Integrations ─────────────────────────────────────────────────────────────
