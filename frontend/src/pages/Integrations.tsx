@@ -43,8 +43,8 @@ export default function Integrations() {
   return (
     <div className="p-6 max-w-2xl mx-auto">
       <div className="mb-6">
-        <h1 className="text-xl font-bold text-gray-100">Integrations</h1>
-        <p className="text-sm text-gray-500 mt-0.5">Connect Statusy with external services</p>
+        <h1 className="text-xl font-bold dark:text-gray-100 text-gray-900">Integrations</h1>
+        <p className="text-sm dark:text-gray-500 text-slate-500 mt-0.5">Connect Statusy with external services</p>
       </div>
 
       {/* Prometheus card */}
@@ -55,13 +55,13 @@ export default function Integrations() {
           </div>
           <div className="flex-1">
             <div className="flex items-center gap-2">
-              <h2 className="font-semibold text-gray-100">Prometheus</h2>
+              <h2 className="font-semibold dark:text-gray-100 text-gray-900">Prometheus</h2>
               {form.enabled && (
-                <span className="text-xs text-emerald-400 bg-emerald-400/10 px-2 py-0.5 rounded-full">Enabled</span>
+                <span className="text-xs text-emerald-600 dark:text-emerald-400 bg-emerald-500/10 px-2 py-0.5 rounded-full">Enabled</span>
               )}
             </div>
-            <p className="text-sm text-gray-400 mt-0.5">
-              Statusy exposes a <code className="text-indigo-400 text-xs bg-gray-800 px-1 py-0.5 rounded">/metrics</code> endpoint
+            <p className="text-sm dark:text-gray-400 text-slate-600 mt-0.5">
+              Statusy exposes a <code className="text-indigo-500 dark:text-indigo-400 text-xs dark:bg-gray-800 bg-slate-100 px-1 py-0.5 rounded">/metrics</code> endpoint
               in Prometheus format. Configure your Prometheus server to scrape it.
             </p>
           </div>
@@ -85,23 +85,23 @@ export default function Integrations() {
                   checked={form.enabled}
                   onChange={(e) => set('enabled', e.target.checked)}
                 />
-                <div className={`w-10 h-6 rounded-full transition-colors ${form.enabled ? 'bg-indigo-600' : 'bg-gray-700'}`} />
-                <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform ${form.enabled ? 'translate-x-4' : ''}`} />
+                <div className={`w-10 h-6 rounded-full transition-colors ${form.enabled ? 'bg-indigo-600' : 'dark:bg-gray-700 bg-slate-300'}`} />
+                <div className={`absolute top-1 left-1 w-4 h-4 bg-white rounded-full transition-transform shadow-sm ${form.enabled ? 'translate-x-4' : ''}`} />
               </div>
-              <span className="text-sm text-gray-300">Enable Prometheus integration</span>
+              <span className="text-sm dark:text-gray-300 text-slate-700">Enable Prometheus integration</span>
             </label>
 
             {/* Metrics endpoint info */}
-            <div className="bg-gray-800/50 rounded-lg p-3 flex items-center gap-3">
+            <div className="dark:bg-gray-800/50 bg-slate-100 border dark:border-gray-700/50 border-slate-200 rounded-lg p-3 flex items-center gap-3">
               <div className="flex-1 min-w-0">
-                <p className="text-xs text-gray-500 mb-0.5">Metrics endpoint (scrape this URL)</p>
-                <p className="text-sm text-indigo-400 font-mono truncate">{metricsUrl}</p>
+                <p className="text-xs dark:text-gray-500 text-slate-500 mb-0.5">Metrics endpoint (scrape this URL)</p>
+                <p className="text-sm text-indigo-500 dark:text-indigo-400 font-mono truncate">{metricsUrl}</p>
               </div>
               <a
                 href="/metrics"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="p-1.5 rounded-lg text-gray-500 hover:text-gray-300 hover:bg-gray-700 transition-colors flex-shrink-0"
+                className="p-1.5 rounded-lg dark:text-gray-500 text-slate-400 dark:hover:text-gray-300 hover:text-slate-600 dark:hover:bg-gray-700 hover:bg-slate-200 transition-colors flex-shrink-0"
                 title="Open metrics endpoint"
               >
                 <ExternalLink className="w-4 h-4" />
@@ -118,15 +118,15 @@ export default function Integrations() {
                 onChange={(e) => set('url', e.target.value)}
                 placeholder="http://prometheus:9090"
               />
-              <p className="text-xs text-gray-600 mt-1">
+              <p className="text-xs dark:text-gray-600 text-slate-500 mt-1">
                 URL of your Prometheus server (used for reference / future push integrations)
               </p>
             </div>
 
             {/* Basic auth */}
-            <div className="border border-gray-800 rounded-lg p-4 space-y-3">
-              <p className="text-xs font-medium text-gray-400 uppercase tracking-wide">
-                HTTP Basic Auth <span className="text-gray-600 normal-case font-normal">(optional — protects /metrics endpoint)</span>
+            <div className="border dark:border-gray-800 border-slate-200 rounded-lg p-4 space-y-3">
+              <p className="text-xs font-medium dark:text-gray-400 text-slate-600 uppercase tracking-wide">
+                HTTP Basic Auth <span className="dark:text-gray-600 text-slate-400 normal-case font-normal">(optional — protects /metrics endpoint)</span>
               </p>
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -153,7 +153,7 @@ export default function Integrations() {
                     <button
                       type="button"
                       onClick={() => setShowPass((v) => !v)}
-                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-300"
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 dark:text-gray-500 text-slate-400 dark:hover:text-gray-300 hover:text-slate-600"
                     >
                       {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
