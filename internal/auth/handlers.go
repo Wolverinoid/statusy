@@ -205,6 +205,11 @@ func (h *Handler) upsertLDAPUser(lu *LDAPUser) (*models.User, error) {
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 func extractBearerToken(r *http.Request) string {
+	// X-Auth-Token takes priority — avoids Basic Auth header collision
+	// when the app is behind a reverse proxy with HTTP Basic Auth.
+	if t := r.Header.Get("X-Auth-Token"); t != "" {
+		return t
+	}
 	header := r.Header.Get("Authorization")
 	if strings.HasPrefix(header, "Bearer ") {
 		return strings.TrimPrefix(header, "Bearer ")

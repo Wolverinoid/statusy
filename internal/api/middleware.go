@@ -77,6 +77,11 @@ func claimsFromCtx(r *http.Request) *auth.Claims {
 }
 
 func extractBearer(r *http.Request) string {
+	// X-Auth-Token takes priority — avoids Basic Auth header collision
+	// when the app is behind a reverse proxy with HTTP Basic Auth.
+	if t := r.Header.Get("X-Auth-Token"); t != "" {
+		return t
+	}
 	h := r.Header.Get("Authorization")
 	if strings.HasPrefix(h, "Bearer ") {
 		return strings.TrimPrefix(h, "Bearer ")

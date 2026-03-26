@@ -15,10 +15,12 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 })
 
-// Attach JWT from localStorage on every request
+// Attach JWT from localStorage on every request.
+// Use X-Auth-Token instead of Authorization: Bearer to avoid
+// browser Basic Auth header collision when behind a reverse proxy.
 api.interceptors.request.use((config) => {
   const token = localStorage.getItem('access_token')
-  if (token) config.headers.Authorization = `Bearer ${token}`
+  if (token) config.headers['X-Auth-Token'] = token
   return config
 })
 
