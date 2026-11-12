@@ -152,6 +152,12 @@ Alerts are triggered on status changes. Each monitor can have one or more notifi
 ### Alert Rules
 - Notify on: `DOWN`, `UP` (recovery), `SSL expiry warning`, `Domain expiry warning`.
 - Configurable: notify only after N consecutive failures (to reduce noise).
+  - The DOWN alert is sent once per outage, on the check where the channel's N-th consecutive failure happens (checked on every check, not only on the status change). Later failures do not re-alert.
+  - A recovery (`UP`) alert is sent only if the DOWN alert was sent to that channel; a blip shorter than N produces neither.
+- HTTP-based monitors (http, keyword, json_api, response_time) append `[CF-RAY: <id>]` to the error details when the failing response has a `CF-RAY` header, so the failure can be traced at Cloudflare. Transport errors (e.g. connection reset) have no response headers, hence no ray ID.
+- Retries: a failed check is re-run up to `Retries` times (2 s apart, never beyond the check interval); the monitor is DOWN only if all attempts fail.
+
+Implementation: `internal/monitors/engine.go` (`checkWithRetries`, `shouldNotify`), `internal/monitors/checkers.go` (`cfRaySuffix`). Tests: `internal/monitors/engine_retries_test.go`, `internal/monitors/engine_notify_test.go`.
 
 ---
 

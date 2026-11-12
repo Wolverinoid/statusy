@@ -156,14 +156,59 @@ func (e *Engine) startWorker(m *models.Monitor) {
 	}()
 }
 
-func (e *Engine) runCheck(ctx context.Context, m *models.Monitor) {
-	start := time.Now()
-	timeout := time.Duration(m.TimeoutSeconds) * time.Second
-	checkCtx, cancel := context.WithTimeout(ctx, timeout)
-	defer cancel()
+// retryDelay is the pause between immediate re-checks of a failed check.
+// (var, not const, so tests can shorten it.)
+var retryDelay = 2 * time.Second
 
-	status, message := RunCheck(checkCtx, m)
-	responseTime := time.Since(start).Milliseconds()
+// checkWithRetries runs the check and, if it fails, immediately re-runs it up to
+// m.Retries more times (retryDelay apart) before reporting DOWN. A single success
+// wins, so one-off failures (e.g. "connection reset by peer" from a CDN edge)
+// no longer flip the monitor to DOWN. Retries stop early when the monitor
+// interval would be exceeded or the context is cancelled.
+// Returns the final status, message and the response time of the last attempt.
+func (e *Engine) checkWithRetries(ctx context.Context, m *models.Monitor) (models.MonitorStatus, string, int64) {
+	timeout := time.Duration(m.TimeoutSeconds) * time.Second
+	interval := time.Duration(m.IntervalSeconds) * time.Second
+	began := time.Now()
+
+	var (
+		status       models.MonitorStatus
+		message      string
+		responseTime int64
+	)
+	for attempt := 0; ; attempt++ {
+		attemptStart := time.Now()
+		checkCtx, cancel := context.WithTimeout(ctx, timeout)
+		status, message = RunCheck(checkCtx, m)
+		cancel()
+		responseTime = time.Since(attemptStart).Milliseconds()
+
+		if status != models.StatusDown || attempt >= m.Retries {
+			if status == models.StatusDown && attempt > 0 {
+				message = fmt.Sprintf("%s (failed %d attempts)", message, attempt+1)
+			}
+			return status, message, responseTime
+		}
+		// Don't let retries overlap with the next scheduled check.
+		if interval > 0 && time.Since(began)+retryDelay >= interval {
+			if attempt > 0 {
+				message = fmt.Sprintf("%s (failed %d attempts)", message, attempt+1)
+			}
+			return status, message, responseTime
+		}
+
+		e.logger.Info("monitor check failed, retrying",
+			"monitor_id", m.ID, "attempt", attempt+1, "of", m.Retries+1, "message", message)
+		select {
+		case <-time.After(retryDelay):
+		case <-ctx.Done():
+			return status, message, responseTime
+		}
+	}
+}
+
+func (e *Engine) runCheck(ctx context.Context, m *models.Monitor) {
+	status, message, responseTime := e.checkWithRetries(ctx, m)
 
 	result := models.CheckResult{
 		MonitorID:      m.ID,
@@ -185,32 +230,27 @@ func (e *Engine) runCheck(ctx context.Context, m *models.Monitor) {
 	// newConsecutiveFailures is the updated count after this check
 	newConsecutiveFailures := consecutiveFailures(status, m.ConsecutiveFailures)
 
-	if status != previousStatus {
-		e.db.Model(m).Updates(map[string]interface{}{
-			"status":               status,
-			"consecutive_failures": newConsecutiveFailures,
-		})
+	// Always persist the failure counter (absolute value, not an increment, so it
+	// stays correct even if the in-memory monitor is stale).
+	if newConsecutiveFailures != m.ConsecutiveFailures {
+		e.db.Model(m).UpdateColumn("consecutive_failures", newConsecutiveFailures)
+	}
 
-		// Load notification channels for this monitor
+	if status != previousStatus {
+		e.db.Model(m).UpdateColumn("status", status)
+	}
+
+	// Alerts are decided per channel on every check (not only on status change):
+	// a channel with NotifyAfterFail=N must fire when the N-th consecutive failure
+	// happens, which is usually a check *after* the status already flipped to DOWN.
+	if status == models.StatusDown || status != previousStatus {
 		var notifs []models.Notification
 		e.db.Model(m).Association("Notifications").Find(&notifs)
 
 		for _, n := range notifs {
-			if !n.Active {
+			if !shouldNotify(n, status, previousStatus, m.ConsecutiveFailures, newConsecutiveFailures) {
 				continue
 			}
-			// Respect noise-reduction: only alert after N consecutive failures
-			// Use newConsecutiveFailures (already incremented) for the comparison
-			if status == models.StatusDown && newConsecutiveFailures < n.NotifyAfterFail {
-				continue
-			}
-			if status == models.StatusDown && !n.NotifyOnDown {
-				continue
-			}
-			if status == models.StatusUp && !n.NotifyOnUp {
-				continue
-			}
-
 			e.dispatcher.Send(notifications.Alert{
 				MonitorID:   m.ID,
 				MonitorName: m.Name,
@@ -219,9 +259,6 @@ func (e *Engine) runCheck(ctx context.Context, m *models.Monitor) {
 				Channel:     n,
 			})
 		}
-	} else if status == models.StatusDown {
-		// Increment consecutive failures counter (no status change, just keep counting)
-		e.db.Model(m).UpdateColumn("consecutive_failures", gorm.Expr("consecutive_failures + 1"))
 	}
 
 	// TLS cert expiry warning: fire daily notifications for HTTPS monitors
@@ -306,6 +343,39 @@ func parseDaysFromMessage(msg string) (int, error) {
 	var days int
 	_, err := fmt.Sscanf(msg[start+1:end], "%d", &days)
 	return days, err
+}
+
+// shouldNotify decides whether channel n gets an alert after a check.
+//
+//   - DOWN: sent exactly once per outage, on the check where the consecutive
+//     failure count reaches the channel's NotifyAfterFail (min 1). Later failed
+//     checks keep counting but do not re-alert.
+//   - UP: a recovery is sent only if the matching DOWN alert was actually sent
+//     to this channel (prevFailures >= threshold). A short blip that never
+//     reached the threshold produces no "DOWN" and therefore no "UP".
+//     First check after creation (PENDING -> UP) keeps notifying as before.
+func shouldNotify(n models.Notification, status, prevStatus models.MonitorStatus, prevFailures, newFailures int) bool {
+	if !n.Active {
+		return false
+	}
+	threshold := n.NotifyAfterFail
+	if threshold < 1 {
+		threshold = 1
+	}
+
+	switch status {
+	case models.StatusDown:
+		return n.NotifyOnDown && newFailures == threshold
+	case models.StatusUp:
+		if status == prevStatus || !n.NotifyOnUp {
+			return false
+		}
+		if prevStatus == models.StatusDown {
+			return prevFailures >= threshold
+		}
+		return true
+	}
+	return false
 }
 
 func consecutiveFailures(status models.MonitorStatus, current int) int {

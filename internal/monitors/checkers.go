@@ -105,7 +105,7 @@ func checkHTTP(ctx context.Context, m *models.Monitor) (models.MonitorStatus, st
 	// AcceptedStatuses (comma-separated) takes priority; falls back to ExpectedStatus (default 200).
 	accepted := parseAcceptedStatuses(m.AcceptedStatuses, m.ExpectedStatus)
 	if !accepted[resp.StatusCode] {
-		return models.StatusDown, fmt.Sprintf("unexpected status %d (accepted: %s)", resp.StatusCode, acceptedString(accepted))
+		return models.StatusDown, fmt.Sprintf("unexpected status %d (accepted: %s)%s", resp.StatusCode, acceptedString(accepted), cfRaySuffix(resp))
 	}
 
 	// TLS certificate check — automatic for all HTTPS monitors
@@ -125,6 +125,21 @@ func checkHTTP(ctx context.Context, m *models.Monitor) (models.MonitorStatus, st
 	}
 
 	return models.StatusUp, fmt.Sprintf("HTTP %d", resp.StatusCode)
+}
+
+// cfRaySuffix returns " [CF-RAY: <id>]" when the response carries a Cloudflare
+// CF-RAY header (empty string otherwise). The ray ID identifies the exact edge
+// request and is what Cloudflare support asks for. Only available when we got an
+// HTTP response; transport errors (e.g. connection reset) have no headers.
+func cfRaySuffix(resp *http.Response) string {
+	if resp == nil {
+		return ""
+	}
+	ray := strings.TrimSpace(resp.Header.Get("CF-RAY"))
+	if ray == "" {
+		return ""
+	}
+	return fmt.Sprintf(" [CF-RAY: %s]", ray)
 }
 
 // parseAcceptedStatuses builds a set of accepted HTTP status codes.
@@ -220,7 +235,7 @@ func checkKeyword(ctx context.Context, m *models.Monitor) (models.MonitorStatus,
 
 	body, err := io.ReadAll(io.LimitReader(resp.Body, 1<<20)) // 1MB limit
 	if err != nil {
-		return models.StatusDown, fmt.Sprintf("failed to read body: %v", err)
+		return models.StatusDown, fmt.Sprintf("failed to read body: %v%s", err, cfRaySuffix(resp))
 	}
 
 	contains := strings.Contains(string(body), m.Keyword)
@@ -228,12 +243,12 @@ func checkKeyword(ctx context.Context, m *models.Monitor) (models.MonitorStatus,
 	switch m.KeywordMode {
 	case "not_contains":
 		if contains {
-			return models.StatusDown, fmt.Sprintf("keyword %q found (should not be present)", m.Keyword)
+			return models.StatusDown, fmt.Sprintf("keyword %q found (should not be present)%s", m.Keyword, cfRaySuffix(resp))
 		}
 		return models.StatusUp, fmt.Sprintf("keyword %q not found (as expected)", m.Keyword)
 	default: // "contains"
 		if !contains {
-			return models.StatusDown, fmt.Sprintf("keyword %q not found", m.Keyword)
+			return models.StatusDown, fmt.Sprintf("keyword %q not found%s", m.Keyword, cfRaySuffix(resp))
 		}
 		return models.StatusUp, fmt.Sprintf("keyword %q found", m.Keyword)
 	}
@@ -257,10 +272,11 @@ func checkJSONAPI(ctx context.Context, m *models.Monitor) (models.MonitorStatus,
 
 	bodyBytes, err := io.ReadAll(io.LimitReader(resp.Body, 1<<20)) // 1MB limit
 	if err != nil {
-		return models.StatusDown, fmt.Sprintf("failed to read response body: %v", err)
+		return models.StatusDown, fmt.Sprintf("failed to read response body: %v%s", err, cfRaySuffix(resp))
 	}
 
 	logFailure := func(msg string) (models.MonitorStatus, string) {
+		msg += cfRaySuffix(resp)
 		fmt.Printf("[json_api] monitor=%q url=%q status=%d body=%s reason=%s\n",
 			m.Name, m.URL, resp.StatusCode, string(bodyBytes), msg)
 		return models.StatusDown, msg
@@ -375,7 +391,7 @@ func checkResponseTime(ctx context.Context, m *models.Monitor) (models.MonitorSt
 
 	elapsed := time.Since(start).Milliseconds()
 	if m.MaxResponseTimeMs > 0 && elapsed > int64(m.MaxResponseTimeMs) {
-		return models.StatusDown, fmt.Sprintf("response time %dms exceeds threshold %dms", elapsed, m.MaxResponseTimeMs)
+		return models.StatusDown, fmt.Sprintf("response time %dms exceeds threshold %dms%s", elapsed, m.MaxResponseTimeMs, cfRaySuffix(resp))
 	}
 
 	return models.StatusUp, fmt.Sprintf("response time %dms", elapsed)
