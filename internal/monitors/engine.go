@@ -227,12 +227,16 @@ func (e *Engine) runCheck(ctx context.Context, m *models.Monitor) {
 
 	// Detect status change
 	previousStatus := m.Status
+	// Snapshot BEFORE the UpdateColumn calls below: GORM writes the updated value
+	// back into the model struct, so m.ConsecutiveFailures would already be the
+	// new value (0 on recovery) and the UP alert would be wrongly suppressed.
+	previousFailures := m.ConsecutiveFailures
 	// newConsecutiveFailures is the updated count after this check
-	newConsecutiveFailures := consecutiveFailures(status, m.ConsecutiveFailures)
+	newConsecutiveFailures := consecutiveFailures(status, previousFailures)
 
 	// Always persist the failure counter (absolute value, not an increment, so it
 	// stays correct even if the in-memory monitor is stale).
-	if newConsecutiveFailures != m.ConsecutiveFailures {
+	if newConsecutiveFailures != previousFailures {
 		e.db.Model(m).UpdateColumn("consecutive_failures", newConsecutiveFailures)
 	}
 
@@ -248,7 +252,7 @@ func (e *Engine) runCheck(ctx context.Context, m *models.Monitor) {
 		e.db.Model(m).Association("Notifications").Find(&notifs)
 
 		for _, n := range notifs {
-			if !shouldNotify(n, status, previousStatus, m.ConsecutiveFailures, newConsecutiveFailures) {
+			if !shouldNotify(n, status, previousStatus, previousFailures, newConsecutiveFailures) {
 				continue
 			}
 			e.dispatcher.Send(notifications.Alert{

@@ -2,12 +2,23 @@ package monitors
 
 import (
 	"context"
+	"fmt"
+	"io"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"strings"
+	"sync"
+	"sync/atomic"
 	"testing"
+	"time"
 
+	"github.com/statusy/statusy/config"
+	"github.com/statusy/statusy/internal/metrics"
 	"github.com/statusy/statusy/internal/models"
+	"github.com/statusy/statusy/internal/notifications"
+	"gorm.io/driver/sqlite"
+	"gorm.io/gorm"
 )
 
 func channel(after int) models.Notification {
@@ -70,5 +81,96 @@ func TestTC5_CFRayInErrorDetails(t *testing.T) {
 	status, msg = checkHTTP(context.Background(), testMonitor(noRay.URL, 0))
 	if status != models.StatusDown || strings.Contains(msg, "CF-RAY") {
 		t.Fatalf("want DOWN without CF-RAY, got %s %q", status, msg)
+	}
+}
+
+// TC6 (R4): end-to-end through runCheck — after a DOWN alert, recovery must send UP.
+// Regression: GORM's UpdateColumn wrote the new failure counter (0) back into the
+// in-memory monitor before shouldNotify ran, so prevFailures was 0 and UP was dropped.
+func TestTC6_RecoveryAfterDownSendsUp(t *testing.T) {
+	var healthy atomic.Bool // target: false -> 500, true -> 200
+	target := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if healthy.Load() {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		w.WriteHeader(http.StatusInternalServerError)
+	}))
+	defer target.Close()
+
+	var mu sync.Mutex
+	var alerts []string // Slack webhook bodies
+	hook := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		b, _ := io.ReadAll(r.Body)
+		mu.Lock()
+		alerts = append(alerts, string(b))
+		mu.Unlock()
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer hook.Close()
+
+	db, err := gorm.Open(sqlite.Open("file::memory:"), &gorm.Config{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	sqlDB, _ := db.DB()
+	sqlDB.SetMaxOpenConns(1) // each :memory: connection is its own database
+	if err := db.AutoMigrate(&models.Monitor{}, &models.Notification{}, &models.CheckResult{}); err != nil {
+		t.Fatal(err)
+	}
+
+	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	disp := notifications.NewDispatcher(&config.Config{}, logger)
+	go disp.Run()
+	defer disp.Stop()
+	e := NewEngine(db, disp, metrics.NewRegistry(), logger)
+
+	mon := testMonitor(target.URL, 0)
+	mon.Status = models.StatusUp
+	if err := db.Create(mon).Error; err != nil {
+		t.Fatal(err)
+	}
+	ch := channel(1)
+	ch.Name, ch.Type = "slack", models.NotifSlack
+	ch.Config = fmt.Sprintf(`{"webhook_url":%q}`, hook.URL)
+	if err := db.Model(mon).Association("Notifications").Append(&ch); err != nil {
+		t.Fatal(err)
+	}
+
+	count := func(sub string) int {
+		mu.Lock()
+		defer mu.Unlock()
+		n := 0
+		for _, a := range alerts {
+			if strings.Contains(a, sub) {
+				n++
+			}
+		}
+		return n
+	}
+	waitFor := func(sub string) {
+		for i := 0; i < 100 && count(sub) == 0; i++ {
+			time.Sleep(20 * time.Millisecond)
+		}
+	}
+	reload := func() *models.Monitor { // the worker reloads the monitor on every tick
+		var m models.Monitor
+		if err := db.First(&m, mon.ID).Error; err != nil {
+			t.Fatal(err)
+		}
+		return &m
+	}
+
+	e.runCheck(context.Background(), reload())
+	waitFor("is DOWN")
+	if count("is DOWN") != 1 {
+		t.Fatalf("want 1 DOWN alert, got %d", count("is DOWN"))
+	}
+
+	healthy.Store(true)
+	e.runCheck(context.Background(), reload())
+	waitFor("is UP")
+	if count("is UP") != 1 {
+		t.Fatalf("want 1 UP alert after recovery, got %d (alerts: %v)", count("is UP"), alerts)
 	}
 }
